@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prep Master - 5.000 Questões (TJSP, PMSP, Direito UMC & Vet UMC)</title>
+    <title>Prep Master - 5.000 Questões (TJSP, PMSP, Direito & Vet UMC)</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Ícones -->
@@ -322,6 +322,21 @@
 
     <!-- LÓGICA E DADOS DA APLICAÇÃO (5.000 QUESTÕES & 200 FLASHCARDS) -->
     <script>
+        // DECLARAÇÃO SEGURA DE VARIÁVEIS GLOBAIS PRIMEIRO
+        let currentUser = null;
+        let isRegistering = false;
+        let currentQuestionIndex = 0;
+        let currentFlashcardIndex = 0;
+        let isFlashcardFlipped = false;
+
+        let userErrors = [];
+        let editalProgress = {};
+        let userStats = { correct: 0, total: 0, bySubject: {} };
+        let userGoal = 80;
+
+        let chartOverallInstance = null;
+        let chartSubjectsInstance = null;
+
         const materiasBase = [
             // TJSP (VUNESP)
             { id: "TJSP_Normas", nome: "NCGJ (Normas da Corregedoria TJSP)", artigos: ["Art. 45 - Livros e Registros", "Art. 98 - Atos Oficiais", "Art. 102 - Certidões e Digitalização"] },
@@ -342,14 +357,12 @@
             { id: "VET_Anatomia", nome: "Anatomia dos Animais Domésticos (Vet UMC)", artigos: ["Sistema Esquelético e Osteologia Veterinária", "Miologia e Aparelho Locomotor", "Esplanchnologia e Órgãos dos Sentidos"] },
             { id: "VET_Farmacologia", nome: "Farmacologia e Terapêutica Veterinária", artigos: ["Farmacocinética e Farmacodinâmica em Cães e Gatos", "Anti-inflamatórios e Analgésicos", "Anestesiologia Veterinária Aplicada"] },
             { id: "VET_Patologia", nome: "Patologia Geral e Clínica Veterinária", artigos: ["Processos Degenerativos e Necrose", "Inflamação Aguda e Crônica", "Interpretação de Exames Hematológicos"] },
-            { id: "VET_ClinicaMedica", nome: "Clínica Médica de Pequenos e Grandes Animais", iss: ["Doenças Infectocontagiosas Veterinárias", "Gastroenterologia e Nefrologia Veterinária", "Obstetrícia e Reprodução Animal"] }
+            { id: "VET_ClinicaMedica", nome: "Clínica Médica de Pequenos e Grandes Animais", artigos: ["Doenças Infectocontagiosas Veterinárias", "Gastroenterologia e Nefrologia Veterinária", "Obstetrícia e Reprodução Animal"] }
         ];
 
         // GERADOR DE 5.000 QUESTÕES ÚNICAS COM GABARITOS ALTERNADOS (A, B, C, D)
         let questionsDb = [];
         let qCounter = 1;
-
-        // Distribuição exata para atingir 5.000 questões entre as 13 matérias (~385 por matéria)
         const questoesPorMateria = Math.ceil(5000 / materiasBase.length);
 
         materiasBase.forEach(m => {
@@ -408,7 +421,7 @@
             }
         });
 
-        // 200 FLASHCARDS ÚNICOS (INCLUINDO VETERINÁRIA E DIREITO)
+        // 200 FLASHCARDS ÚNICOS
         const rawFlashcardTemplates = [
             { t: "NCGJ", q: "Qual a destinação dada aos mandados cumpridos negativos no TJSP?", a: "Devem ser arquivados em pasta própria ou digitalizados conforme provimento da Corregedoria." },
             { t: "CPC", q: "Como se contam os prazos processuais em dias no CPC/2015?", a: "Computam-se apenas em dias úteis (Art. 219 CPC)." },
@@ -440,20 +453,6 @@
             { id: 'umc_civil', titulo: 'Direito UMC: Contratos & Consumidor', itens: ['Princípio da Boa-fé Objetiva e Função Social', 'Direito de Arrependimento de 7 dias (CDC)', 'Títulos Executivos Extrajudiciais'] },
             { id: 'umc_vet', titulo: 'Medicina Veterinária UMC: Grade Acadêmica', itens: ['Anatomia Veterinária dos Animais Domésticos', 'Farmacologia, Anestesiologia e Terapêutica', 'Patologia Geral e Clínica Médica Veterinária'] }
         ];
-
-        let currentUser = null;
-        let isRegistering = false;
-        let currentQuestionIndex = 0;
-        let currentFlashcardIndex = 0;
-        let isFlashcardFlipped = false;
-
-        let userErrors = [];
-        let editalProgress = {};
-        let userStats = { correct: 0, total: 0, bySubject: {} };
-        let userGoal = 80;
-
-        let chartOverallInstance = null;
-        let chartSubjectsInstance = null;
 
         window.onload = function() {
             let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
@@ -696,11 +695,8 @@
             });
         }
 
-        // EXPLOSÃO DE CONFETES REAIS NA TELA AO ATINGIR A META
         function triggerCelebration() {
             document.getElementById('celebration-modal').classList.remove('hidden');
-            
-            // Dispara confetes espetaculares pela biblioteca canvas-confetti
             try {
                 confetti({
                     particleCount: 150,
