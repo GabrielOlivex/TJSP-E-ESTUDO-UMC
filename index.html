@@ -50,6 +50,9 @@
                         <i class="fa-solid fa-user-plus"></i>
                     </button>
                 </div>
+                <button onclick="openChangePasswordModal()" title="Alterar Senha" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 px-2.5 py-1.5 rounded-lg transition font-bold flex items-center gap-1">
+                    <i class="fa-solid fa-key"></i> Senha
+                </button>
                 <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition font-medium shadow-sm flex items-center gap-1">
                     <i class="fa-solid fa-right-from-bracket"></i> Sair
                 </button>
@@ -69,13 +72,14 @@
             
             <div class="p-6 space-y-4">
                 <div id="auth-error" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-3 text-sm rounded"></div>
+                <div id="auth-success" class="hidden bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-3 text-sm rounded"></div>
                 
                 <div>
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">E-mail</label>
                     <input type="email" id="auth-email" placeholder="seuemail@exemplo.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
 
-                <div>
+                <div id="password-field-container">
                     <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Senha</label>
                     <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
                 </div>
@@ -84,9 +88,12 @@
                     Entrar no Sistema
                 </button>
 
-                <div class="text-center pt-2">
-                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-xs text-indigo-600 hover:underline font-medium">
-                        Não tem uma conta? Cadastre-se gratuitamente
+                <div class="flex justify-between items-center pt-2 text-xs">
+                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-600 hover:underline font-medium">
+                        Não tem uma conta? Cadastre-se
+                    </button>
+                    <button onclick="toggleRecoveryMode()" id="recovery-toggle-btn" class="text-slate-500 hover:text-indigo-600 font-medium">
+                        Esqueceu a senha?
                     </button>
                 </div>
             </div>
@@ -314,17 +321,35 @@
         </div>
     </div>
 
+    <!-- MODAL PARA ALTERAR SENHA (USUÁRIO LOGADO) -->
+    <div id="change-password-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-base font-bold text-slate-900">Alterar Senha de Acesso</h3>
+            <p class="text-xs text-slate-500">Defina uma nova senha para a sua conta atual.</p>
+            <div id="change-pass-error" class="hidden bg-red-50 text-red-700 p-2 text-xs rounded border border-red-200"></div>
+            <div id="change-pass-success" class="hidden bg-emerald-50 text-emerald-700 p-2 text-xs rounded border border-emerald-200"></div>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nova Senha</label>
+                <input type="password" id="new-pass-input" placeholder="••••••••" class="w-full px-3 py-2 border rounded-xl text-xs">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeChangePasswordModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+                <button onclick="submitChangePassword()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Salvar Nova Senha</button>
+            </div>
+        </div>
+    </div>
+
     <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
         <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
             Prep Master • Sistema de Alta Performance de Estudos (TJSP, PMSP, Direito & Vet UMC)
         </div>
     </footer>
 
-    <!-- LÓGICA E DADOS DA APLICAÇÃO (5.000 QUESTÕES & 200 FLASHCARDS) -->
+    <!-- LÓGICA E DADOS DA APLICAÇÃO -->
     <script>
-        // DECLARAÇÃO SEGURA DE VARIÁVEIS GLOBAIS PRIMEIRO
         let currentUser = null;
         let isRegistering = false;
+        let isRecovering = false;
         let currentQuestionIndex = 0;
         let currentFlashcardIndex = 0;
         let isFlashcardFlipped = false;
@@ -338,29 +363,21 @@
         let chartSubjectsInstance = null;
 
         const materiasBase = [
-            // TJSP (VUNESP)
             { id: "TJSP_Normas", nome: "NCGJ (Normas da Corregedoria TJSP)", artigos: ["Art. 45 - Livros e Registros", "Art. 98 - Atos Oficiais", "Art. 102 - Certidões e Digitalização"] },
             { id: "TJSP_ProcCivil", nome: "Direito Processual Civil (CPC / VUNESP)", artigos: ["Art. 219 - Prazos em Dias Úteis", "Art. 784, III - Título Executivo Extrajudicial", "Art. 334 - Conciliação e Mediação"] },
             { id: "TJSP_ProcPenal", nome: "Direito Processual Penal (CPP / VUNESP)", artigos: ["Art. 362 - Citação por Hora Certa", "Art. 366 - Suspensão do Processo", "Art. 312 - Prisão Preventiva"] },
             { id: "TJSP_Constitucional", nome: "Direito Constitucional (CF/88)", artigos: ["Art. 5º, XI - Inviolabilidade de Domicílio", "Art. 5º, LV - Contraditório e Ampla Defesa", "Art. 93 - Princípios do Judiciário"] },
-            
-            // PMSP
             { id: "PMSP_Constitucional", nome: "Constitucional & Administrativo (PMSP)", artigos: ["Estatuto dos Funcionários Públicos Municipais", "Lei Orgânica do Município de SP", "Poderes Administrativos e Atos"] },
             { id: "PMSP_Legislacao", nome: "Legislação Específica PMSP", artigos: ["Plano Diretor Estratégico de SP", "Regime Jurídico Municipal", "Licitações e Contratos Públicos"] },
-
-            // DIREITO UMC
             { id: "UMC_Contratos", nome: "Direito Civil: Contratos em Espécie (UMC)", artigos: ["Art. 422 - Boa-fé Objetiva", "Art. 481 - Compra e Venda", "Art. 593 - Prestação de Serviços"] },
             { id: "UMC_CDC", nome: "Direito do Consumidor (CDC / UMC)", artigos: ["Art. 49 - Direito de Arrependimento (7 dias)", "Art. 14 - Responsabilidade Objetiva", "Art. 39 - Práticas Abusivas"] },
             { id: "UMC_Penal", nome: "Direito Penal: Crimes Funcionais (UMC)", artigos: ["Art. 312 - Peculato", "Art. 316 - Concussão", "Art. 317 - Corrupção Passiva"] },
-
-            // MEDICINA VETERINÁRIA UMC
             { id: "VET_Anatomia", nome: "Anatomia dos Animais Domésticos (Vet UMC)", artigos: ["Sistema Esquelético e Osteologia Veterinária", "Miologia e Aparelho Locomotor", "Esplanchnologia e Órgãos dos Sentidos"] },
             { id: "VET_Farmacologia", nome: "Farmacologia e Terapêutica Veterinária", artigos: ["Farmacocinética e Farmacodinâmica em Cães e Gatos", "Anti-inflamatórios e Analgésicos", "Anestesiologia Veterinária Aplicada"] },
             { id: "VET_Patologia", nome: "Patologia Geral e Clínica Veterinária", artigos: ["Processos Degenerativos e Necrose", "Inflamação Aguda e Crônica", "Interpretação de Exames Hematológicos"] },
             { id: "VET_ClinicaMedica", nome: "Clínica Médica de Pequenos e Grandes Animais", artigos: ["Doenças Infectocontagiosas Veterinárias", "Gastroenterologia e Nefrologia Veterinária", "Obstetrícia e Reprodução Animal"] }
         ];
 
-        // GERADOR DE 5.000 QUESTÕES ÚNICAS COM GABARITOS ALTERNADOS (A, B, C, D)
         let questionsDb = [];
         let qCounter = 1;
         const questoesPorMateria = Math.ceil(5000 / materiasBase.length);
@@ -421,7 +438,6 @@
             }
         });
 
-        // 200 FLASHCARDS ÚNICOS
         const rawFlashcardTemplates = [
             { t: "NCGJ", q: "Qual a destinação dada aos mandados cumpridos negativos no TJSP?", a: "Devem ser arquivados em pasta própria ou digitalizados conforme provimento da Corregedoria." },
             { t: "CPC", q: "Como se contam os prazos processuais em dias no CPC/2015?", a: "Computam-se apenas em dias úteis (Art. 219 CPC)." },
@@ -469,24 +485,83 @@
 
         function toggleAuthMode() {
             isRegistering = !isRegistering;
+            isRecovering = false;
             document.getElementById('auth-title').innerText = isRegistering ? 'Criar Nova Conta' : 'Acesse sua Conta';
             document.getElementById('auth-submit-btn').innerText = isRegistering ? 'Cadastrar e Entrar' : 'Entrar no Sistema';
-            document.getElementById('auth-toggle-btn').innerText = isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se gratuitamente';
+            document.getElementById('auth-toggle-btn').innerText = isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se';
+            document.getElementById('recovery-toggle-btn').classList.remove('hidden');
+            document.getElementById('password-field-container').style.display = 'block';
             document.getElementById('auth-error').classList.add('hidden');
+            document.getElementById('auth-success').classList.add('hidden');
+        }
+
+        function toggleRecoveryMode() {
+            isRecovering = !isRecovering;
+            isRegistering = false;
+            const passField = document.getElementById('password-field-container');
+            const submitBtn = document.getElementById('auth-submit-btn');
+            const titleElem = document.getElementById('auth-title');
+            const toggleBtn = document.getElementById('auth-toggle-btn');
+            const recoveryToggle = document.getElementById('recovery-toggle-btn');
+
+            if (isRecovering) {
+                titleElem.innerText = 'Recuperar Senha';
+                submitBtn.innerText = 'Redefinir e Cadastrar Nova Senha';
+                passField.style.display = 'block';
+                document.getElementById('auth-password').placeholder = 'Digite a sua nova senha';
+                toggleBtn.classList.add('hidden');
+                recoveryToggle.innerText = '← Voltar para o Login';
+            } else {
+                titleElem.innerText = 'Acesse sua Conta';
+                submitBtn.innerText = 'Entrar no Sistema';
+                document.getElementById('auth-password').placeholder = '••••••••';
+                toggleBtn.classList.remove('hidden');
+                recoveryToggle.innerText = 'Esqueceu a senha?';
+            }
+            document.getElementById('auth-error').classList.add('hidden');
+            document.getElementById('auth-success').classList.add('hidden');
         }
 
         function handleAuthSubmit() {
             const email = document.getElementById('auth-email').value.trim();
             const pass = document.getElementById('auth-password').value.trim();
             const errorBox = document.getElementById('auth-error');
+            const successBox = document.getElementById('auth-success');
 
-            if (!email || !pass) {
-                errorBox.innerText = "Preencha o e-mail e a senha.";
+            if (!email) {
+                errorBox.innerText = "Informe o seu e-mail.";
                 errorBox.classList.remove('hidden');
                 return;
             }
 
             let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+
+            if (isRecovering) {
+                if (!pass) {
+                    errorBox.innerText = "Digite a sua nova senha.";
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+                if (!usersDb[email]) {
+                    errorBox.innerText = "Este e-mail não está cadastrado na plataforma.";
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+                // Atualiza a senha
+                usersDb[email] = pass;
+                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+                successBox.innerText = "Senha redefinida com sucesso! Faça login.";
+                successBox.classList.remove('hidden');
+                errorBox.classList.add('hidden');
+                setTimeout(() => { toggleRecoveryMode(); }, 1500);
+                return;
+            }
+
+            if (!pass) {
+                errorBox.innerText = "Preencha a senha.";
+                errorBox.classList.remove('hidden');
+                return;
+            }
 
             if (isRegistering) {
                 if (usersDb[email]) {
@@ -585,6 +660,39 @@
             localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
             closeAddAccountModal();
             loginUser(email);
+        }
+
+        function openChangePasswordModal() {
+            document.getElementById('new-pass-input').value = '';
+            document.getElementById('change-pass-error').classList.add('hidden');
+            document.getElementById('change-pass-success').classList.add('hidden');
+            document.getElementById('change-password-modal').classList.remove('hidden');
+        }
+
+        function closeChangePasswordModal() {
+            document.getElementById('change-password-modal').classList.add('hidden');
+        }
+
+        function submitChangePassword() {
+            const newPass = document.getElementById('new-pass-input').value.trim();
+            const errBox = document.getElementById('change-pass-error');
+            const successBox = document.getElementById('change-pass-success');
+
+            if (!newPass) {
+                errBox.innerText = "Digite a nova senha.";
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+            usersDb[currentUser] = newPass;
+            localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+
+            successBox.innerText = "Senha alterada com sucesso!";
+            successBox.classList.remove('hidden');
+            errBox.classList.add('hidden');
+
+            setTimeout(() => { closeChangePasswordModal(); }, 1500);
         }
 
         function logout() {
