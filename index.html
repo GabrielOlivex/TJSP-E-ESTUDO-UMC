@@ -151,4 +151,452 @@
             </div>
 
             <!-- CONTEÚDO DA ABA: EDITAL -->
-            <div id="tab-edital" class="hidden space-y-
+            <div id="tab-edital" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Grade Integrada: TJSP + Faculdade UMC</h3>
+                    <p class="text-xs text-slate-500 mb-4">Acompanhe seu percentual de conclusão dos estudos.</p>
+                    
+                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-6">
+                        <div id="progress-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
+                    </div>
+
+                    <div id="edital-list" class="space-y-4"></div>
+                </div>
+            </div>
+
+            <!-- CONTEÚDO DA ABA: CADERNO DE ERROS -->
+            <div id="tab-erros" class="hidden space-y-6">
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                    <h3 class="text-lg font-bold text-slate-900 mb-1">Caderno de Erros Registrados</h3>
+                    <p class="text-xs text-slate-500 mb-4">Revise o racional dos seus erros para eliminar falhas no dia da prova.</p>
+                    <div id="errors-container" class="space-y-4"></div>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <!-- MODAL PARA ADICIONAR NOVO LOGIN RÁPIDO -->
+    <div id="add-account-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
+            <h3 class="text-base font-bold text-slate-900">Adicionar Novo Perfil de Acesso</h3>
+            <p class="text-xs text-slate-500">Crie um novo login para alternar rapidamente na plataforma.</p>
+            <div id="modal-error" class="hidden bg-red-50 text-red-700 p-2 text-xs rounded border border-red-200"></div>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">E-mail</label>
+                <input type="email" id="modal-email" placeholder="novo@email.com" class="w-full px-3 py-2 border rounded-xl text-xs">
+            </div>
+            <div>
+                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Senha</label>
+                <input type="password" id="modal-password" placeholder="••••••••" class="w-full px-3 py-2 border rounded-xl text-xs">
+            </div>
+            <div class="flex gap-2 pt-2">
+                <button onclick="closeAddAccountModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-xl text-xs font-bold">Cancelar</button>
+                <button onclick="createNewAccountFromModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Cadastrar e Acessar</button>
+            </div>
+        </div>
+    </div>
+
+    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
+            Prep TJSP & UMC Law • Sistema de Alta Performance de Estudos
+        </div>
+    </footer>
+
+    <!-- LÓGICA E BANCO DE DADOS -->
+    <script>
+        const materiasBase = [
+            { id: "TJSP_Normas", nome: "NCGJ (Normas da Corregedoria TJSP)", artigos: ["Art. 45 - Livros e Registros", "Art. 98 - Atos Oficiais", "Art. 102 - Certidões e Digitalização"] },
+            { id: "TJSP_ProcCivil", nome: "Direito Processual Civil (CPC / VUNESP)", artigos: ["Art. 219 - Prazos em Dias Úteis", "Art. 784, III - Título Executivo Extrajudicial", "Art. 334 - Conciliação e Mediação"] },
+            { id: "TJSP_ProcPenal", nome: "Direito Processual Penal (CPP / VUNESP)", artigos: ["Art. 362 - Citação por Hora Certa", "Art. 366 - Suspensão do Processo", "Art. 312 - Prisão Preventiva"] },
+            { id: "TJSP_Constitucional", nome: "Direito Constitucional (CF/88)", artigos: ["Art. 5º, XI - Inviolabilidade de Domicílio", "Art. 5º, LV - Contraditório e Ampla Defesa", "Art. 93 - Princípios do Judiciário"] },
+            { id: "UMC_Contratos", nome: "Direito Civil: Contratos em Espécie (UMC)", artigos: ["Art. 422 - Boa-fé Objetiva", "Art. 481 - Compra e Venda", "Art. 593 - Prestação de Serviços"] },
+            { id: "UMC_CDC", nome: "Direito do Consumidor (CDC / UMC)", artigos: ["Art. 49 - Direito de Arrependimento (7 dias)", "Art. 14 - Responsabilidade Objetiva do Fornecedor", "Art. 39 - Práticas Abusivas"] },
+            { id: "UMC_Penal", nome: "Direito Penal: Crimes Funcionais (UMC)", artigos: ["Art. 312 - Peculato", "Art. 316 - Concussão (Exigir vantagem)", "Art. 317 - Corrupção Passiva"] }
+        ];
+
+        let questionsDb = [];
+        let count = 1;
+
+        materiasBase.forEach(m => {
+            for (let i = 1; i <= 150; i++) {
+                const art = m.artigos[i % m.artigos.length];
+                questionsDb.push({
+                    id: count,
+                    materia: m.id,
+                    origem: m.nome,
+                    enunciado: `[Questão #${count}] Considerando o regramento legal pertinente a ${m.nome}, especialmente quanto ao ${art}, assinale a alternativa CORRETA:`,
+                    alternativas: [
+                        `A aplicação da regra insculpida no ${art} exige observância estrita aos preceitos legais e jurisprudenciais vigentes.`,
+                        `O ${art} admite flexibilização sem necessidade de fundamentação legal prévia.`,
+                        `A norma legal disposta no ${art} aplica-se exclusivamente aos processos instaurados antes de 2020.`,
+                        `O descumprimento do prescrito no ${art} não gera qualquer tipo de nulidade ou sanção processual.`
+                    ],
+                    correta: 0,
+                    comentario: `Fundamentação legal: A alternativa A está CORRETA com base no texto expresso da legislação aplicável ao ${art}. As demais alternativas contêm vícios de interpretação.`
+                });
+                count++;
+            }
+        });
+
+        // FLASHCARDS EXPANDIDOS (MAIS MEMORIZAÇÃO)
+        const flashcardsDb = [
+            { q: "Qual a contagem de prazos no CPC/2015?", a: "Contam-se apenas em DIAS ÚTEIS (somente prazos fixados em dias). Art. 219 CPC." },
+            { q: "Qual o prazo de arrependimento do consumidor no CDC (compras fora do estabelecimento)?", a: "7 dias a contar da assinatura ou recebimento, com devolução integral do valor (Art. 49 CDC)." },
+            { q: "Qual o crime funcional cujo verbo núcleo é EXIGIR vantagem indevida?", a: "Concussão (Art. 316 do Código Penal)." },
+            { q: "Qual o dispositivo que torna o contrato particular assinado por 2 testemunhas um Título Executivo Extrajudicial?", a: "Artigo 784, inciso III, do Código de Processo Civil (CPC)." },
+            { q: "Nas NCGJ, como devem ser tratados os espaços em branco nos livros do cartório?", a: "Devem ser integralmente inutilizados e entrelinhas ou rasuras ressalvadas." },
+            { q: "O que diz o princípio da Boa-fé Objetiva nos Contratos (Art. 422 CC)?", a: "Os contratantes são obrigados a guardar, assim na conclusão do contrato, como em sua execução, os princípios de probidade e boa-fé." },
+            { q: "Qual a diferença entre furto e roubo no Direito Penal?", a: "O furto envolve subtração sem violência ou grave ameaça (Art. 157 CP para roubo, que exige violência/grave ameaça)." },
+            { q: "O que é responsabilidade objetiva no CDC (Art. 14)?", a: "O fornecedor responde independentemente da existência de culpa pela reparação dos danos causados aos consumidores." },
+            { q: "Qual o prazo prescricional genérico para reparações civis no Código Civil?", a: "3 anos, salvo exceções legais específicas (Art. 206, § 3º, CC)." },
+            { q: "O que caracteriza o crime de Peculato (Art. 312 CP)?", a: "Apropriar-se o funcionário público de dinheiro, valor ou qualquer outro bem móvel, público ou particular, de que tem a posse em razão do cargo." }
+        ];
+
+        const editalData = [
+            { id: 'tjsp_ncgj', titulo: 'TJSP: Normas da Corregedoria Geral (NCGJ)', itens: ['Escrituração, livros e classificadores', 'Atos e comunicações oficiais', 'Distribuição e certidões'] },
+            { id: 'tjsp_proc', titulo: 'TJSP: Direito Processual Civil e Penal', itens: ['Contagem de prazos em dias úteis (CPC Art. 219)', 'Citação por hora certa e edital (CPP)', 'Recursos judiciais VUNESP'] },
+            { id: 'umc_civil', titulo: 'UMC: Direito Civil - Contratos em Espécie', itens: ['Princípio da Boa-fé Objetiva e Função Social', 'Compra e venda, Prestação de Serviços e Empreitada', 'Termos de Transação e Acordo Extrajudicial (CPC 784, III)'] },
+            { id: 'umc_cdc', titulo: 'UMC: Direito do Consumidor (CDC)', itens: ['Conceito de Consumidor e Fornecedor', 'Direito de Arrependimento de 7 dias (Art. 49)', 'Responsabilidade pelo Fato e Vício do Produto'] },
+            { id: 'umc_penal', titulo: 'UMC: Direito Penal - Crimes Funcionais', itens: ['Peculato (Art. 312 CP)', 'Concussão x Corrupção Passiva (Arts. 316 e 317 CP)', 'Prevaricação e Condescendência Criminosa'] }
+        ];
+
+        let currentUser = null;
+        let isRegistering = false;
+        let currentQuestionIndex = 0;
+        let currentFlashcardIndex = 0;
+        let isFlashcardFlipped = false;
+        let userErrors = [];
+        let editalProgress = {};
+
+        window.onload = function() {
+            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+            if (!usersDb["Gabriel.myers@hotmail.com"]) {
+                usersDb["Gabriel.myers@hotmail.com"] = "Claro@9878";
+                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+            }
+
+            const savedUser = localStorage.getItem('prep_tjsp_user');
+            if (savedUser && usersDb[savedUser]) {
+                loginUser(savedUser);
+            }
+        };
+
+        function toggleAuthMode() {
+            isRegistering = !isRegistering;
+            document.getElementById('auth-title').innerText = isRegistering ? 'Criar Nova Conta' : 'Acesse sua Conta';
+            document.getElementById('auth-submit-btn').innerText = isRegistering ? 'Cadastrar e Entrar' : 'Entrar no Sistema';
+            document.getElementById('auth-toggle-btn').innerText = isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se gratuitamente';
+            document.getElementById('auth-error').classList.add('hidden');
+        }
+
+        function handleAuthSubmit() {
+            const email = document.getElementById('auth-email').value.trim();
+            const pass = document.getElementById('auth-password').value.trim();
+            const errorBox = document.getElementById('auth-error');
+
+            if (!email || !pass) {
+                errorBox.innerText = "Preencha o e-mail e a senha.";
+                errorBox.classList.remove('hidden');
+                return;
+            }
+
+            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+
+            if (isRegistering) {
+                if (usersDb[email]) {
+                    errorBox.innerText = "Este e-mail já está cadastrado. Faça login.";
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+                usersDb[email] = pass;
+                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+            } else {
+                if (!usersDb[email] || usersDb[email] !== pass) {
+                    errorBox.innerText = "E-mail ou senha incorretos.";
+                    errorBox.classList.remove('hidden');
+                    return;
+                }
+            }
+
+            loginUser(email);
+        }
+
+        function loginUser(email) {
+            currentUser = email;
+            localStorage.setItem('prep_tjsp_user', email);
+            
+            const userData = JSON.parse(localStorage.getItem('prep_tjsp_data_' + email) || '{"errors":[], "edital":{}}');
+            userErrors = userData.errors || [];
+            editalProgress = userData.edital || {};
+
+            document.getElementById('auth-section').classList.add('hidden');
+            document.getElementById('dashboard-section').classList.remove('hidden');
+            document.getElementById('user-header-info').classList.remove('hidden');
+            
+            let displayName = email === "Gabriel.myers@hotmail.com" ? "Gabriel (Master)" : email;
+            document.getElementById('user-display-email').innerText = displayName;
+
+            updateAccountSwitcherOptions();
+            renderQuestion();
+            renderEdital();
+            renderFlashcard();
+            updateErrorBadge();
+        }
+
+        function updateAccountSwitcherOptions() {
+            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+            let select = document.getElementById('account-switcher');
+            let html = '';
+            for (let email in usersDb) {
+                let selected = email === currentUser ? 'selected' : '';
+                let label = email === "Gabriel.myers@hotmail.com" ? "Gabriel (Master)" : email;
+                html += `<option value="${email}" ${selected}>${label}</option>`;
+            }
+            select.innerHTML = html;
+        }
+
+        function switchAccount(email) {
+            if (email && email !== currentUser) {
+                loginUser(email);
+            }
+        }
+
+        function openAddAccountModal() {
+            document.getElementById('modal-email').value = '';
+            document.getElementById('modal-password').value = '';
+            document.getElementById('modal-error').classList.add('hidden');
+            document.getElementById('add-account-modal').classList.remove('hidden');
+        }
+
+        function closeAddAccountModal() {
+            document.getElementById('add-account-modal').classList.add('hidden');
+        }
+
+        function createNewAccountFromModal() {
+            const email = document.getElementById('modal-email').value.trim();
+            const pass = document.getElementById('modal-password').value.trim();
+            const errBox = document.getElementById('modal-error');
+
+            if (!email || !pass) {
+                errBox.innerText = "Preencha todos os campos.";
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
+            if (usersDb[email]) {
+                errBox.innerText = "Este e-mail já existe.";
+                errBox.classList.remove('hidden');
+                return;
+            }
+
+            usersDb[email] = pass;
+            localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+            closeAddAccountModal();
+            loginUser(email);
+        }
+
+        function logout() {
+            currentUser = null;
+            localStorage.removeItem('prep_tjsp_user');
+            document.getElementById('dashboard-section').classList.add('hidden');
+            document.getElementById('user-header-info').classList.add('hidden');
+            document.getElementById('auth-section').classList.remove('hidden');
+            document.getElementById('auth-email').value = '';
+            document.getElementById('auth-password').value = '';
+        }
+
+        function saveData() {
+            if (!currentUser) return;
+            const userData = { errors: userErrors, edital: editalProgress };
+            localStorage.setItem('prep_tjsp_data_' + currentUser, JSON.stringify(userData));
+        }
+
+        function switchTab(tabName) {
+            ['questoes', 'flashcards', 'edital', 'erros'].forEach(t => {
+                document.getElementById('tab-' + t).classList.add('hidden');
+                document.getElementById('tab-btn-' + t).className = "flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100";
+            });
+            document.getElementById('tab-' + tabName).classList.remove('hidden');
+            document.getElementById('tab-btn-' + tabName).className = "flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm";
+
+            if (tabName === 'erros') renderErrors();
+        }
+
+        function resetAndRender() {
+            currentQuestionIndex = 0;
+            renderQuestion();
+        }
+
+        function renderQuestion() {
+            const materiaFilter = document.getElementById('filter-materia').value;
+            const filtered = materiaFilter === 'all' ? questionsDb : questionsDb.filter(q => q.materia === materiaFilter);
+            
+            if (filtered.length === 0) {
+                document.getElementById('question-card').innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhuma questão encontrada para este filtro.</p>`;
+                return;
+            }
+
+            if (currentQuestionIndex >= filtered.length) currentQuestionIndex = 0;
+            const q = filtered[currentQuestionIndex];
+
+            let html = `
+                <div class="flex justify-between items-center text-xs text-slate-400 font-semibold uppercase tracking-wider">
+                    <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100">${q.origem}</span>
+                    <span>Questão ${currentQuestionIndex + 1} de ${filtered.length}</span>
+                </div>
+                <p class="text-sm font-semibold text-slate-900 mt-2">${q.enunciado}</p>
+                <div class="space-y-2 pt-2">
+            `;
+
+            q.alternativas.forEach((alt, idx) => {
+                html += `
+                    <button onclick="checkAnswer(${q.id}, ${idx})" id="alt-${idx}" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition text-xs font-medium flex items-center gap-3">
+                        <span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0">${String.fromCharCode(65 + idx)}</span>
+                        <span>${alt}</span>
+                    </button>
+                `;
+            });
+
+            html += `</div><div id="feedback-box" class="hidden mt-4 p-4 rounded-xl text-xs"></div>`;
+            document.getElementById('question-card').innerHTML = html;
+        }
+
+        function checkAnswer(questionId, selectedIdx) {
+            const q = questionsDb.find(item => item.id === questionId);
+            const feedbackBox = document.getElementById('feedback-box');
+            
+            q.alternativas.forEach((_, idx) => {
+                const btn = document.getElementById(`alt-${idx}`);
+                btn.disabled = true;
+                if (idx === q.correta) {
+                    btn.className = "w-full text-left p-3 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-900 font-medium flex items-center gap-3";
+                } else if (idx === selectedIdx) {
+                    btn.className = "w-full text-left p-3 rounded-xl border border-red-500 bg-red-50 text-red-900 font-medium flex items-center gap-3";
+                }
+            });
+
+            if (selectedIdx === q.correta) {
+                feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-800";
+                feedbackBox.innerHTML = `<strong>Resposta Correta!</strong> ${q.comentario}`;
+                userErrors = userErrors.filter(e => e.id !== q.id);
+            } else {
+                feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-red-50 border border-red-200 text-red-800";
+                feedbackBox.innerHTML = `<strong>Resposta Incorreta.</strong> ${q.comentario}`;
+                if (!userErrors.some(e => e.id === q.id)) {
+                    userErrors.push(q);
+                }
+            }
+            feedbackBox.classList.remove('hidden');
+            saveData();
+            updateErrorBadge();
+
+            setTimeout(() => {
+                const card = document.getElementById('question-card');
+                if(!document.getElementById('next-btn')) {
+                    const nextBtn = document.createElement('button');
+                    nextBtn.id = 'next-btn';
+                    nextBtn.className = 'mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-xl text-xs transition';
+                    nextBtn.innerText = 'Próxima Questão →';
+                    nextBtn.onclick = () => { currentQuestionIndex++; renderQuestion(); };
+                    card.appendChild(nextBtn);
+                }
+            }, 200);
+        }
+
+        function renderFlashcard() {
+            const fc = flashcardsDb[currentFlashcardIndex];
+            const textElem = document.getElementById('flashcard-text');
+            isFlashcardFlipped = false;
+            textElem.innerHTML = `<span class="text-amber-400 font-bold block text-xs uppercase tracking-wider mb-2">Pergunta (Clique para revelar a resposta)</span>${fc.q}`;
+            document.getElementById('flashcard-counter').innerText = `Cartão ${currentFlashcardIndex + 1} de ${flashcardsDb.length}`;
+        }
+
+        function flipFlashcard() {
+            const fc = flashcardsDb[currentFlashcardIndex];
+            const textElem = document.getElementById('flashcard-text');
+            isFlashcardFlipped = !isFlashcardFlipped;
+            if (isFlashcardFlipped) {
+                textElem.innerHTML = `<span class="text-emerald-400 font-bold block text-xs uppercase tracking-wider mb-2">Resposta / Fundamento Legal</span>${fc.a}`;
+            } else {
+                textElem.innerHTML = `<span class="text-amber-400 font-bold block text-xs uppercase tracking-wider mb-2">Pergunta (Clique para revelar a resposta)</span>${fc.q}`;
+            }
+        }
+
+        function nextFlashcard() {
+            currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcardsDb.length;
+            renderFlashcard();
+        }
+
+        function prevFlashcard() {
+            currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcardsDb.length) % flashcardsDb.length;
+            renderFlashcard();
+        }
+
+        function updateErrorBadge() {
+            document.getElementById('error-count-badge').innerText = userErrors.length;
+        }
+
+        function renderEdital() {
+            let html = '';
+            let totalItens = 0;
+            let concluidos = 0;
+
+            editalData.forEach(bloco => {
+                html += `<div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
+                    <h4 class="font-bold text-xs text-indigo-950 uppercase tracking-wide flex items-center gap-2">
+                        <i class="fa-solid fa-bookmark text-amber-500"></i> ${bloco.titulo}
+                    </h4>
+                    <div class="space-y-1.5 pt-1">`;
+                
+                bloco.itens.forEach((item, idx) => {
+                    totalItens++;
+                    const key = bloco.id + '_' + idx;
+                    const isChecked = editalProgress[key] ? 'checked' : '';
+                    if (isChecked) concluidos++;
+
+                    html += `
+                        <label class="flex items-center gap-3 text-xs text-slate-700 cursor-pointer p-1.5 hover:bg-white rounded-lg transition">
+                            <input type="checkbox" ${isChecked} onchange="toggleEditalItem('${key}')" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
+                            <span class="${isChecked ? 'line-through text-slate-400' : ''}">${item}</span>
+                        </label>
+                    `;
+                });
+                html += `</div></div>`;
+            });
+
+            document.getElementById('edital-list').innerHTML = html;
+            const pct = totalItens > 0 ? Math.round((concluidos / totalItens) * 100) : 0;
+            document.getElementById('progress-bar').style.width = pct + '%';
+        }
+
+        function toggleEditalItem(key) {
+            editalProgress[key] = !editalProgress[key];
+            saveData();
+            renderEdital();
+        }
+
+        function renderErrors() {
+            const container = document.getElementById('errors-container');
+            if (userErrors.length === 0) {
+                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Nenhuma questão errada no momento. Parabéns!</p>`;
+                return;
+            }
+
+            let html = '';
+            userErrors.forEach(q => {
+                html += `
+                    <div class="border border-red-100 bg-red-50/40 rounded-xl p-4 space-y-2">
+                        <span class="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-md uppercase">${q.origem}</span>
+                        <p class="text-xs font-semibold text-slate-900">${q.enunciado}</p>
+                        <p class="text-xs text-slate-600 bg-white p-3 rounded-lg border border-red-100"><strong>Fundamentação:</strong> ${q.comentario}</p>
+                    </div>
+                `;
+            });
+            container.innerHTML = html;
+        }
+    </script>
+</body>
+</html>
