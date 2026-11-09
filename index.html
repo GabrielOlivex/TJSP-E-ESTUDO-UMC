@@ -3,11 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prep TJSP & UMC Law - 1000+ Questões & 200 Flashcards</title>
+    <title>Prep TJSP & UMC Law - Dashboard, Questões & Flashcards</title>
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Ícones -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Chart.js para Gráficos -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @keyframes bounce-slow {
+            0%, 100% { transform: translateY(-5%); }
+            50% { transform: translateY(0); }
+        }
+        .animate-justice {
+            animation: bounce-slow 2s infinite ease-in-out;
+        }
+    </style>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
 
@@ -20,7 +31,7 @@
                 </div>
                 <div>
                     <h1 class="text-xl font-bold tracking-tight">Prep TJSP & UMC Law</h1>
-                    <p class="text-xs text-indigo-200">1.000+ Questões • 200 Flashcards de Memorização</p>
+                    <p class="text-xs text-indigo-200">Plataforma Avançada com Metas & Estatísticas</p>
                 </div>
             </div>
 
@@ -84,26 +95,116 @@
             
             <!-- ABAS DE NAVEGAÇÃO -->
             <div class="flex overflow-x-auto bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 gap-1">
-                <button onclick="switchTab('questoes')" id="tab-btn-questoes" class="flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
+                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
+                    <i class="fa-solid fa-chart-pie"></i> Desempenho & Metas
+                </button>
+                <button onclick="switchTab('questoes')" id="tab-btn-questoes" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
                     <i class="fa-solid fa-list-check"></i> Banco de 1.000+ Questões
                 </button>
                 <button onclick="switchTab('flashcards')" id="tab-btn-flashcards" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-bolt text-amber-500"></i> 200 Flashcards <span class="bg-amber-100 text-amber-800 text-[10px] px-2 py-0.5 rounded-full font-bold">200</span>
+                    <i class="fa-solid fa-bolt text-amber-500"></i> 200 Flashcards
                 </button>
                 <button onclick="switchTab('edital')" id="tab-btn-edital" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-book-open"></i> Edital TJSP & Grade UMC
+                    <i class="fa-solid fa-book-open"></i> Edital TJSP & UMC
                 </button>
                 <button onclick="switchTab('erros')" id="tab-btn-erros" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Caderno de Erros <span id="error-count-badge" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">0</span>
+                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Erros <span id="error-count-badge" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">0</span>
                 </button>
             </div>
 
+            <!-- CONTEÚDO DA ABA: DASHBOARD & METAS -->
+            <div id="tab-dashboard" class="space-y-6">
+                
+                <!-- CARDS DE RESUMO E PAINEL DE META -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Card 1: Meta de Acertos -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div>
+                            <div class="flex justify-between items-center mb-2">
+                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Sua Meta de Acertos</span>
+                                <i class="fa-solid fa-bullseye text-indigo-500 text-lg"></i>
+                            </div>
+                            <div class="flex items-center gap-2 my-2">
+                                <input type="number" id="user-goal-input" min="1" max="100" value="80" class="w-20 px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-bold text-center">
+                                <span class="text-sm font-bold">%</span>
+                                <button onclick="saveUserGoal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold">Salvar Meta</button>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span>Progresso Atual:</span>
+                                <span id="goal-progress-text">0% / 80%</span>
+                            </div>
+                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
+                                <div id="goal-progress-bar" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Estatísticas Rápidas -->
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Resumo de Questões</span>
+                            <i class="fa-solid fa-square-poll-vertical text-emerald-500 text-lg"></i>
+                        </div>
+                        <div class="grid grid-cols-3 text-center gap-2 my-2">
+                            <div class="bg-slate-50 p-2 rounded-xl">
+                                <span class="block text-xs text-slate-400 font-semibold">Respondidas</span>
+                                <span id="stat-total" class="text-lg font-bold text-slate-800">0</span>
+                            </div>
+                            <div class="bg-emerald-50 p-2 rounded-xl">
+                                <span class="block text-xs text-emerald-600 font-semibold">Acertos</span>
+                                <span id="stat-correct" class="text-lg font-bold text-emerald-700">0</span>
+                            </div>
+                            <div class="bg-red-50 p-2 rounded-xl">
+                                <span class="block text-xs text-red-600 font-semibold">Erros</span>
+                                <span id="stat-wrong" class="text-lg font-bold text-red-700">0</span>
+                            </div>
+                        </div>
+                        <div class="text-xs text-slate-500 text-center">
+                            Aproveitamento Geral: <strong id="stat-accuracy" class="text-slate-800">0%</strong>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Status de Meta -->
+                    <div id="goal-status-card" class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center">
+                        <i class="fa-solid fa-award text-3xl text-amber-400 mb-1 animate-bounce"></i>
+                        <div>
+                            <h4 class="font-bold text-sm">Status da Conquista</h4>
+                            <p id="goal-status-msg" class="text-xs text-indigo-200 mt-1">Responda mais questões para atingir sua meta personalizada!</p>
+                        </div>
+                        <button onclick="triggerCelebration()" class="mt-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-3 py-1 rounded-lg">Testar Celebração</button>
+                    </div>
+                </div>
+
+                <!-- ÁREA DOS GRÁFICOS -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-pie text-indigo-600"></i> Taxa Geral de Acertos vs Erros
+                        </h4>
+                        <div class="relative h-64 flex justify-center">
+                            <canvas id="chart-overall"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
+                        <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-column text-indigo-600"></i> Desempenho por Disciplina (%)
+                        </h4>
+                        <div class="relative h-64">
+                            <canvas id="chart-subjects"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
             <!-- CONTEÚDO DA ABA: QUESTÕES -->
-            <div id="tab-questoes" class="space-y-6">
+            <div id="tab-questoes" class="hidden space-y-6">
                 <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
                     <div>
                         <h3 class="text-lg font-bold text-slate-900">Banco Prático de Treinamento</h3>
-                        <p class="text-xs text-slate-500">Questões geradas dinamicamente com base no edital TJSP (VUNESP) e na grade UMC.</p>
+                        <p class="text-xs text-slate-500">Questões geradas com base no edital TJSP (VUNESP) e na grade UMC.</p>
                     </div>
                     <div class="flex flex-wrap gap-2">
                         <select id="filter-materia" onchange="resetAndRender()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-medium focus:ring-2 focus:ring-indigo-500">
@@ -170,7 +271,25 @@
 
     </main>
 
-    <!-- MODAL PARA ADICIONAR NOVO LOGIN RÁPIDO -->
+    <!-- MODAL DE CELEBRAÇÃO / BONEQUINHO DA JUSTIÇA FELIZ 🎉 -->
+    <div id="celebration-modal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center border-4 border-amber-400 relative overflow-hidden">
+            <!-- Balança Animada -->
+            <div class="bg-amber-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-inner animate-justice">
+                <i class="fa-solid fa-scale-balanced text-5xl text-amber-500"></i>
+            </div>
+            <div>
+                <span class="text-xs font-extrabold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Meta Conquistada!</span>
+                <h3 class="text-2xl font-black text-slate-900 mt-2">PARABÉNS!</h3>
+                <p id="celebration-msg" class="text-xs text-slate-600 mt-1">Você atingiu a sua meta de acertos na plataforma de estudos! O cargo no TJSP está cada vez mais próximo.</p>
+            </div>
+            <button onclick="closeCelebrationModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md text-xs">
+                Continuar Estudando 💪
+            </button>
+        </div>
+    </div>
+
+    <!-- MODAL PARA ADICIONAR NOVO LOGIN -->
     <div id="add-account-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
             <h3 class="text-base font-bold text-slate-900">Adicionar Novo Perfil de Acesso</h3>
@@ -197,7 +316,7 @@
         </div>
     </footer>
 
-    <!-- LÓGICA E BANCO DE DADOS (1000+ QUESTÕES & 200 FLASHCARDS) -->
+    <!-- LÓGICA E DADOS DA APLICAÇÃO -->
     <script>
         const materiasBase = [
             { id: "TJSP_Normas", nome: "NCGJ (Normas da Corregedoria TJSP)", artigos: ["Art. 45 - Livros e Registros", "Art. 98 - Atos Oficiais", "Art. 102 - Certidões e Digitalização"] },
@@ -233,7 +352,7 @@
             }
         });
 
-        // GERADOR DOS 200 FLASHCARDS ESSENCIAIS
+        // 200 FLASHCARDS ESSENCIAIS
         let flashcardsDb = [];
         const temasFlashcards = [
             { tema: "CPC/2015", qPadrao: "Qual a regra de contagem de prazos em dias no CPC?", aPadrao: "Computam-se apenas os dias úteis (Art. 219 CPC)." },
@@ -271,8 +390,15 @@
         let currentQuestionIndex = 0;
         let currentFlashcardIndex = 0;
         let isFlashcardFlipped = false;
+
+        // DADOS DO UTILIZADOR
         let userErrors = [];
         let editalProgress = {};
+        let userStats = { correct: 0, total: 0, bySubject: {} };
+        let userGoal = 80;
+
+        let chartOverallInstance = null;
+        let chartSubjectsInstance = null;
 
         window.onload = function() {
             let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
@@ -331,9 +457,13 @@
             currentUser = email;
             localStorage.setItem('prep_tjsp_user', email);
             
-            const userData = JSON.parse(localStorage.getItem('prep_tjsp_data_' + email) || '{"errors":[], "edital":{}}');
+            const userData = JSON.parse(localStorage.getItem('prep_tjsp_data_' + email) || '{"errors":[], "edital":{}, "stats":{"correct":0, "total":0, "bySubject":{}}, "goal":80}');
             userErrors = userData.errors || [];
             editalProgress = userData.edital || {};
+            userStats = userData.stats || { correct: 0, total: 0, bySubject: {} };
+            userGoal = userData.goal || 80;
+
+            document.getElementById('user-goal-input').value = userGoal;
 
             document.getElementById('auth-section').classList.add('hidden');
             document.getElementById('dashboard-section').classList.remove('hidden');
@@ -343,6 +473,7 @@
             document.getElementById('user-display-email').innerText = displayName;
 
             updateAccountSwitcherOptions();
+            renderDashboard();
             renderQuestion();
             renderEdital();
             renderFlashcard();
@@ -414,19 +545,111 @@
 
         function saveData() {
             if (!currentUser) return;
-            const userData = { errors: userErrors, edital: editalProgress };
+            const userData = { errors: userErrors, edital: editalProgress, stats: userStats, goal: userGoal };
             localStorage.setItem('prep_tjsp_data_' + currentUser, JSON.stringify(userData));
         }
 
         function switchTab(tabName) {
-            ['questoes', 'flashcards', 'edital', 'erros'].forEach(t => {
+            ['dashboard', 'questoes', 'flashcards', 'edital', 'erros'].forEach(t => {
                 document.getElementById('tab-' + t).classList.add('hidden');
                 document.getElementById('tab-btn-' + t).className = "flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100";
             });
             document.getElementById('tab-' + tabName).classList.remove('hidden');
             document.getElementById('tab-btn-' + tabName).className = "flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm";
 
+            if (tabName === 'dashboard') renderDashboard();
             if (tabName === 'erros') renderErrors();
+        }
+
+        // LÓGICA DO DASHBOARD, METAS E GRÁFICOS
+        function saveUserGoal() {
+            const val = parseInt(document.getElementById('user-goal-input').value) || 80;
+            userGoal = Math.min(100, Math.max(1, val));
+            document.getElementById('user-goal-input').value = userGoal;
+            saveData();
+            renderDashboard();
+        }
+
+        function renderDashboard() {
+            const wrong = userStats.total - userStats.correct;
+            const accuracy = userStats.total > 0 ? Math.round((userStats.correct / userStats.total) * 100) : 0;
+
+            document.getElementById('stat-total').innerText = userStats.total;
+            document.getElementById('stat-correct').innerText = userStats.correct;
+            document.getElementById('stat-wrong').innerText = wrong;
+            document.getElementById('stat-accuracy').innerText = accuracy + '%';
+
+            document.getElementById('goal-progress-text').innerText = `${accuracy}% / ${userGoal}%`;
+            const pctBar = Math.min(100, Math.round((accuracy / userGoal) * 100));
+            document.getElementById('goal-progress-bar').style.width = pctBar + '%';
+
+            const statusMsg = document.getElementById('goal-status-msg');
+            if (userStats.total > 5 && accuracy >= userGoal) {
+                statusMsg.innerText = `Sensacional! A sua taxa atual (${accuracy}%) ultrapassa a sua meta (${userGoal}%). Mantém o ritmo!`;
+            } else {
+                statusMsg.innerText = `Falta pouco! Continua a praticar mais questões para atingires ${userGoal}% de acertos.`;
+            }
+
+            renderCharts(accuracy, wrong);
+        }
+
+        function renderCharts(accuracy, wrong) {
+            // Gráfico 1: Geral
+            const ctx1 = document.getElementById('chart-overall').getContext('2d');
+            if (chartOverallInstance) chartOverallInstance.destroy();
+            chartOverallInstance = new Chart(ctx1, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Acertos', 'Erros'],
+                    datasets: [{
+                        data: [userStats.correct, wrong],
+                        backgroundColor: ['#10b981', '#ef4444'],
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom' } }
+                }
+            });
+
+            // Gráfico 2: Por Disciplina
+            const labels = materiasBase.map(m => m.id.replace('TJSP_', '').replace('UMC_', ''));
+            const dataPcts = materiasBase.map(m => {
+                const s = userStats.bySubject[m.id];
+                if (!s || s.total === 0) return 0;
+                return Math.round((s.correct / s.total) * 100);
+            });
+
+            const ctx2 = document.getElementById('chart-subjects').getContext('2d');
+            if (chartSubjectsInstance) chartSubjectsInstance.destroy();
+            chartSubjectsInstance = new Chart(ctx2, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% de Acerto',
+                        data: dataPcts,
+                        backgroundColor: '#6366f1',
+                        borderRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: { y: { beginAtZero: true, max: 100 } },
+                    plugins: { legend: { display: false } }
+                }
+            });
+        }
+
+        function triggerCelebration() {
+            document.getElementById('celebration-modal').classList.remove('hidden');
+        }
+
+        function closeCelebrationModal() {
+            document.getElementById('celebration-modal').classList.add('hidden');
         }
 
         function resetAndRender() {
@@ -482,10 +705,25 @@
                 }
             });
 
+            // Atualiza estatísticas do utilizador
+            userStats.total++;
+            if (!userStats.bySubject[q.materia]) userStats.bySubject[q.materia] = { correct: 0, total: 0 };
+            userStats.bySubject[q.materia].total++;
+
+            const wasGoalAlreadyMet = userStats.total > 5 && Math.round((userStats.correct / userStats.total) * 100) >= userGoal;
+
             if (selectedIdx === q.correta) {
+                userStats.correct++;
+                userStats.bySubject[q.materia].correct++;
                 feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-800";
                 feedbackBox.innerHTML = `<strong>Resposta Correta!</strong> ${q.comentario}`;
                 userErrors = userErrors.filter(e => e.id !== q.id);
+
+                // Dispara a animação se a meta acabou de ser atingida!
+                const isGoalMetNow = userStats.total > 5 && Math.round((userStats.correct / userStats.total) * 100) >= userGoal;
+                if (!wasGoalAlreadyMet && isGoalMetNow) {
+                    triggerCelebration();
+                }
             } else {
                 feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-red-50 border border-red-200 text-red-800";
                 feedbackBox.innerHTML = `<strong>Resposta Incorreta.</strong> ${q.comentario}`;
