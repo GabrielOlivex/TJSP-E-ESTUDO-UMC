@@ -3,1007 +3,661 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prep Master - 5.000 Questões (TJSP, PMSP, Direito & Vet UMC)</title>
-    <!-- Tailwind CSS -->
+    <title>Roleta dos Docinhos - Direito Civil</title>
+
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- FontAwesome Ícones -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- Chart.js para Gráficos -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <!-- Canvas Confetti para a Explosão de Confetes -->
+    
+    <!-- Canvas Confetti CDN -->
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700;900&family=Nunito:wght@400;700;900&family=Shrikhand&display=swap" rel="stylesheet">
+
     <style>
-        @keyframes bounce-slow {
-            0%, 100% { transform: translateY(-5%); }
-            50% { transform: translateY(0); }
+        body {
+            font-family: 'Nunito', sans-serif;
+            background: radial-gradient(circle at center, #2e1065, #1e0034, #0f001a);
+            min-height: 100vh;
+            overflow-x: hidden;
         }
-        .animate-justice {
-            animation: bounce-slow 2s infinite ease-in-out;
+
+        .title-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+
+        .fancy-font {
+            font-family: 'Shrikhand', cursive;
+        }
+
+        /* Glassmorphism panel */
+        .glass-card {
+            background: rgba(255, 255, 255, 0.08);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        /* Wheel Shadow & Glow */
+        .wheel-glow {
+            box-shadow: 0 0 60px rgba(168, 85, 247, 0.45), 0 20px 50px rgba(0, 0, 0, 0.85);
+        }
+
+        /* Side pointer pulse animation */
+        @keyframes pulse-right-pointer {
+            0%, 100% { transform: translateY(-50%) scale(1); }
+            50% { transform: translateY(-50%) scale(1.15); }
+        }
+
+        .pointer-right-anim {
+            animation: pulse-right-pointer 1.2s infinite ease-in-out;
+        }
+
+        /* Floating emojis overlay */
+        .floating-emoji {
+            position: fixed;
+            pointer-events: none;
+            z-index: 99;
+            user-select: none;
+            animation: floatUpAndFade 2.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
+        }
+
+        @keyframes floatUpAndFade {
+            0% {
+                opacity: 0;
+                transform: translate(-50%, 0) scale(0.3) rotate(0deg);
+            }
+            15% {
+                opacity: 1;
+                transform: translate(-50%, -30px) scale(1.4) rotate(15deg);
+            }
+            100% {
+                opacity: 0;
+                transform: translate(calc(-50% + var(--spread-x)), -320px) scale(0.8) rotate(var(--rotation));
+            }
+        }
+
+        /* Modal Pop Animation */
+        @keyframes modalPop {
+            0% { transform: scale(0.7) translateY(30px); opacity: 0; }
+            100% { transform: scale(1) translateY(0); opacity: 1; }
+        }
+
+        .animate-modal {
+            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
         }
     </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+<body class="text-white flex flex-col justify-between items-center p-4 min-h-screen">
 
-    <!-- CABEÇALHO -->
-    <header class="bg-indigo-950 text-white shadow-md border-b border-indigo-800">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
-            <div class="flex items-center space-x-3">
-                <div class="bg-indigo-700 p-2.5 rounded-xl shadow-inner text-amber-400">
-                    <i class="fa-solid fa-scale-balanced text-2xl"></i>
-                </div>
-                <div>
-                    <h1 class="text-xl font-bold tracking-tight">Prep Master • UMC & Concursos</h1>
-                    <p class="text-xs text-indigo-200">5.000 Questões • TJSP, PMSP, Direito & Medicina Veterinária</p>
-                </div>
-            </div>
-
-            <!-- PERFIL E ALTERNADOR DE CONTAS -->
-            <div id="user-header-info" class="hidden flex flex-wrap items-center gap-3 bg-indigo-900/80 px-4 py-2 rounded-xl border border-indigo-700/50">
-                <div class="flex items-center space-x-2">
-                    <i class="fa-solid fa-user-shield text-amber-400"></i>
-                    <span id="user-display-email" class="text-xs font-semibold"></span>
-                </div>
-                <div class="flex items-center gap-1">
-                    <select id="account-switcher" onchange="switchAccount(this.value)" class="bg-indigo-950 text-white text-xs px-2.5 py-1.5 rounded-lg border border-indigo-600 focus:outline-none">
-                    </select>
-                    <button onclick="openAddAccountModal()" title="Adicionar / Criar novo login" class="bg-indigo-600 hover:bg-indigo-500 text-white text-xs px-2.5 py-1.5 rounded-lg transition font-medium">
-                        <i class="fa-solid fa-user-plus"></i>
-                    </button>
-                </div>
-                <button onclick="openChangePasswordModal()" title="Alterar Senha" class="text-xs bg-amber-500 hover:bg-amber-600 text-slate-950 px-2.5 py-1.5 rounded-lg transition font-bold flex items-center gap-1">
-                    <i class="fa-solid fa-key"></i> Senha
-                </button>
-                <button onclick="logout()" class="text-xs bg-red-600 hover:bg-red-700 text-white px-3 py-1.5 rounded-lg transition font-medium shadow-sm flex items-center gap-1">
-                    <i class="fa-solid fa-right-from-bracket"></i> Sair
-                </button>
-            </div>
+    <!-- Header Section -->
+    <header class="text-center mt-2 mb-3 z-10 w-full max-w-2xl">
+        <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-xs sm:text-sm font-semibold mb-2 shadow-lg">
+            <span>⚖️</span>
+            <span>Direito Civil — Contratos & Doações</span>
         </div>
+        <h1 class="title-font text-3xl sm:text-5xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 drop-shadow-md">
+            ROLETA DOS DOCINHOS
+        </h1>
+        <p class="text-purple-200 text-xs sm:text-sm mt-1 opacity-90 font-medium">
+            Gire a roleta e descubra quem vai levar a doação doce de hoje! 🍬
+        </p>
     </header>
 
-    <!-- CONTEÚDO PRINCIPAL -->
-    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+    <!-- Main Content Container -->
+    <main class="flex flex-col items-center justify-center my-auto w-full max-w-lg relative z-10">
 
-        <!-- TELA DE AUTENTICAÇÃO -->
-        <section id="auth-section" class="max-w-md mx-auto bg-white rounded-2xl shadow-xl border border-slate-100 overflow-hidden my-12">
-            <div class="bg-gradient-to-r from-indigo-950 to-indigo-800 px-6 py-6 text-white text-center">
-                <h2 id="auth-title" class="text-2xl font-bold">Acesse sua Conta</h2>
-                <p id="auth-subtitle" class="text-xs text-indigo-200 mt-1">Plataforma de Estudos Multidisciplinar</p>
+        <!-- Wheel Outer Box -->
+        <div class="relative flex flex-col items-center my-2">
+
+            <!-- Right Pointer Arrow (pointing LEFT onto wheel slice at 0° angle) -->
+            <div class="absolute right-[-24px] sm:right-[-32px] top-1/2 -translate-y-1/2 z-30 pointer-right-anim filter drop-shadow-2xl">
+                <svg width="52" height="46" viewBox="0 0 48 42" fill="none" xmlns="http://www.w3.org/2000/svg" class="sm:w-16 sm:h-14">
+                    <path d="M4 21L40 3L30 21L40 39L4 21Z" fill="#F8FAFC" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
+                    <path d="M4 21L36 7.5L28 21L36 34.5L4 21Z" fill="#E2E8F0"/>
+                </svg>
             </div>
-            
-            <div class="p-6 space-y-4">
-                <div id="auth-error" class="hidden bg-red-50 border-l-4 border-red-500 text-red-700 p-3 text-sm rounded"></div>
-                <div id="auth-success" class="hidden bg-emerald-50 border-l-4 border-emerald-500 text-emerald-700 p-3 text-sm rounded"></div>
+
+            <!-- Wheel Canvas Frame -->
+            <div class="wheel-glow relative w-[340px] h-[340px] sm:w-[450px] sm:h-[450px] rounded-full p-2 bg-gradient-to-b from-purple-900 to-slate-950 border-4 border-amber-400/80">
                 
-                <div>
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">E-mail</label>
-                    <input type="email" id="auth-email" placeholder="seuemail@exemplo.com" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                </div>
+                <!-- Canvas Element -->
+                <canvas id="wheelCanvas" width="900" height="900" class="w-full h-full rounded-full cursor-pointer"></canvas>
 
-                <div id="password-field-container">
-                    <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-1">Senha</label>
-                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-2.5 rounded-xl border border-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500 text-sm">
-                </div>
-
-                <button onclick="handleAuthSubmit()" id="auth-submit-btn" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3 rounded-xl transition shadow-md text-sm">
-                    Entrar no Sistema
-                </button>
-
-                <div class="flex justify-between items-center pt-2 text-xs">
-                    <button onclick="toggleAuthMode()" id="auth-toggle-btn" class="text-indigo-600 hover:underline font-medium">
-                        Não tem uma conta? Cadastre-se
-                    </button>
-                    <button onclick="toggleRecoveryMode()" id="recovery-toggle-btn" class="text-slate-500 hover:text-indigo-600 font-medium">
-                        Esqueceu a senha?
-                    </button>
-                </div>
-            </div>
-        </section>
-
-        <!-- DASHBOARD DE ESTUDOS (PÓS-LOGIN) -->
-        <div id="dashboard-section" class="hidden space-y-6">
-            
-            <!-- ABAS DE NAVEGAÇÃO -->
-            <div class="flex overflow-x-auto bg-white p-1.5 rounded-2xl shadow-sm border border-slate-200 gap-1">
-                <button onclick="switchTab('dashboard')" id="tab-btn-dashboard" class="flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm">
-                    <i class="fa-solid fa-chart-pie"></i> Desempenho & Metas
-                </button>
-                <button onclick="switchTab('questoes')" id="tab-btn-questoes" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-list-check"></i> 5.000 Questões
-                </button>
-                <button onclick="switchTab('flashcards')" id="tab-btn-flashcards" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-bolt text-amber-500"></i> 200 Flashcards
-                </button>
-                <button onclick="switchTab('edital')" id="tab-btn-edital" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-book-open"></i> Editais & Grades
-                </button>
-                <button onclick="switchTab('erros')" id="tab-btn-erros" class="flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100">
-                    <i class="fa-solid fa-triangle-exclamation text-red-500"></i> Erros <span id="error-count-badge" class="bg-red-500 text-white text-xs px-2 py-0.5 rounded-full">0</span>
-                </button>
-            </div>
-
-            <!-- CONTEÚDO DA ABA: DASHBOARD & METAS -->
-            <div id="tab-dashboard" class="space-y-6">
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                        <div>
-                            <div class="flex justify-between items-center mb-2">
-                                <span class="text-xs font-bold uppercase tracking-wider text-indigo-600">Sua Meta de Acertos</span>
-                                <i class="fa-solid fa-bullseye text-indigo-500 text-lg"></i>
-                            </div>
-                            <div class="flex items-center gap-2 my-2">
-                                <input type="number" id="user-goal-input" min="1" max="100" value="80" class="w-20 px-3 py-1.5 border border-slate-300 rounded-xl text-sm font-bold text-center">
-                                <span class="text-sm font-bold">%</span>
-                                <button onclick="saveUserGoal()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-3 py-1.5 rounded-xl text-xs font-bold">Salvar Meta</button>
-                            </div>
-                        </div>
-                        <div class="mt-4">
-                            <div class="flex justify-between text-xs font-semibold mb-1">
-                                <span>Progresso Atual:</span>
-                                <span id="goal-progress-text">0% / 80%</span>
-                            </div>
-                            <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden">
-                                <div id="goal-progress-bar" class="bg-indigo-600 h-full transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200 flex flex-col justify-between">
-                        <div class="flex justify-between items-center mb-2">
-                            <span class="text-xs font-bold uppercase tracking-wider text-emerald-600">Resumo de Questões</span>
-                            <i class="fa-solid fa-square-poll-vertical text-emerald-500 text-lg"></i>
-                        </div>
-                        <div class="grid grid-cols-3 text-center gap-2 my-2">
-                            <div class="bg-slate-50 p-2 rounded-xl">
-                                <span class="block text-xs text-slate-400 font-semibold">Respondidas</span>
-                                <span id="stat-total" class="text-lg font-bold text-slate-800">0</span>
-                            </div>
-                            <div class="bg-emerald-50 p-2 rounded-xl">
-                                <span class="block text-xs text-emerald-600 font-semibold">Acertos</span>
-                                <span id="stat-correct" class="text-lg font-bold text-emerald-700">0</span>
-                            </div>
-                            <div class="bg-red-50 p-2 rounded-xl">
-                                <span class="block text-xs text-red-600 font-semibold">Erros</span>
-                                <span id="stat-wrong" class="text-lg font-bold text-red-700">0</span>
-                            </div>
-                        </div>
-                        <div class="text-xs text-slate-500 text-center">
-                            Aproveitamento Geral: <strong id="stat-accuracy" class="text-slate-800">0%</strong>
-                        </div>
-                    </div>
-
-                    <div id="goal-status-card" class="bg-gradient-to-br from-indigo-900 to-slate-900 text-white p-5 rounded-2xl shadow-sm flex flex-col justify-between items-center text-center">
-                        <i class="fa-solid fa-award text-3xl text-amber-400 mb-1 animate-bounce"></i>
-                        <div>
-                            <h4 class="font-bold text-sm">Status da Conquista</h4>
-                            <p id="goal-status-msg" class="text-xs text-indigo-200 mt-1">Responda mais questões para atingir sua meta personalizada!</p>
-                        </div>
-                        <button onclick="triggerCelebration()" class="mt-2 text-[10px] bg-amber-500 hover:bg-amber-600 text-slate-950 font-extrabold px-3 py-1 rounded-lg">Testar Celebração 🎉</button>
-                    </div>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-pie text-indigo-600"></i> Taxa Geral de Acertos vs Erros
-                        </h4>
-                        <div class="relative h-64 flex justify-center">
-                            <canvas id="chart-overall"></canvas>
-                        </div>
-                    </div>
-                    <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-                        <h4 class="text-sm font-bold text-slate-800 mb-4 flex items-center gap-2">
-                            <i class="fa-solid fa-chart-column text-indigo-600"></i> Desempenho por Área (%)
-                        </h4>
-                        <div class="relative h-64">
-                            <canvas id="chart-subjects"></canvas>
-                        </div>
-                    </div>
+                <!-- Center Knob ("Roleta dos Docinhos") -->
+                <div id="centerKnob" onclick="spinWheel()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-b from-purple-800 via-purple-900 to-slate-950 border-4 border-amber-400 shadow-2xl flex flex-col items-center justify-center z-20 cursor-pointer hover:scale-105 active:scale-95 transition-all text-center p-1">
+                    <span class="text-amber-300 text-xs sm:text-sm">🎁</span>
+                    <span class="fancy-font text-amber-300 text-xs sm:text-base leading-tight tracking-wide drop-shadow">
+                        Roleta<br><span class="text-white">dos</span><br><span class="text-yellow-300">Docinhos</span>
+                    </span>
                 </div>
             </div>
 
-            <!-- CONTEÚDO DA ABA: 5.000 QUESTÕES -->
-            <div id="tab-questoes" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col sm:flex-row justify-between items-center gap-4">
-                    <div>
-                        <h3 class="text-lg font-bold text-slate-900">Banco de Treinamento (5.000 Questões)</h3>
-                        <p class="text-xs text-slate-500">Filtradas por Concursos TJSP, PMSP, Direito UMC e Medicina Veterinária UMC.</p>
-                    </div>
-                    <div class="flex flex-wrap gap-2">
-                        <select id="filter-materia" onchange="resetAndRender()" class="px-3 py-2 rounded-xl border border-slate-200 text-xs bg-slate-50 font-medium focus:ring-2 focus:ring-indigo-500">
-                            <option value="all">Todas as Áreas e Disciplinas</option>
-                            <optgroup label="Concurso TJSP (VUNESP)">
-                                <option value="TJSP_Normas">NCGJ - Normas da Corregedoria</option>
-                                <option value="TJSP_Constitucional">Direito Constitucional TJSP</option>
-                                <option value="TJSP_ProcCivil">Direito Processual Civil TJSP</option>
-                                <option value="TJSP_ProcPenal">Direito Processual Penal TJSP</option>
-                            </optgroup>
-                            <optgroup label="Concurso PMSP">
-                                <option value="PMSP_Constitucional">Constitucional & Administrativo PMSP</option>
-                                <option value="PMSP_Legislacao">Legislação Específica PMSP</option>
-                            </optgroup>
-                            <optgroup label="Direito UMC">
-                                <option value="UMC_Contratos">Direito Civil: Contratos em Espécie</option>
-                                <option value="UMC_CDC">Direito do Consumidor (CDC)</option>
-                                <option value="UMC_Penal">Direito Penal (Crimes em Espécie)</option>
-                            </optgroup>
-                            <optgroup label="Medicina Veterinária UMC">
-                                <option value="VET_Anatomia">Anatomia dos Animais Domésticos (Vet UMC)</option>
-                                <option value="VET_Farmacologia">Farmacologia e Terapêutica Veterinária</option>
-                                <option value="VET_Patologia">Patologia Geral e Clínica Veterinária</option>
-                                <option value="VET_ClinicaMedica">Clínica Médica de Pequenos e Grandes Animais</option>
-                            </optgroup>
-                        </select>
-                    </div>
-                </div>
-
-                <div id="question-card" class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 space-y-4"></div>
-            </div>
-
-            <!-- CONTEÚDO DA ABA: 200 FLASHCARDS -->
-            <div id="tab-flashcards" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 text-center space-y-4">
-                    <div class="flex justify-between items-center">
-                        <span class="text-xs font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full uppercase">Revisão Espaçada (200 Cartões Únicos)</span>
-                        <span id="flashcard-counter" class="text-xs font-semibold text-slate-400">Cartão 1 de 200</span>
-                    </div>
-                    <h3 class="text-xl font-bold text-slate-900">Lei Seca, Prazos & Conceitos de Veterinária</h3>
-                    <div id="flashcard-box" class="bg-gradient-to-br from-indigo-950 to-slate-900 text-white p-8 rounded-2xl shadow-lg cursor-pointer min-h-[240px] flex items-center justify-center text-center transition transform hover:scale-[1.01]" onclick="flipFlashcard()">
-                        <p id="flashcard-text" class="text-base sm:text-lg font-medium"></p>
-                    </div>
-                    <div class="flex flex-wrap justify-center gap-3">
-                        <button onclick="prevFlashcard()" class="px-4 py-2 bg-slate-200 hover:bg-slate-300 rounded-xl text-xs font-bold"><i class="fa-solid fa-arrow-left"></i> Anterior</button>
-                        <button onclick="flipFlashcard()" class="px-4 py-2 bg-amber-500 hover:bg-amber-600 text-white rounded-xl text-xs font-bold"><i class="fa-solid fa-rotate"></i> Virar Cartão</button>
-                        <button onclick="nextFlashcard()" class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl text-xs font-bold">Próximo <i class="fa-solid fa-arrow-right"></i></button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- CONTEÚDO DA ABA: EDITAIS E GRADES -->
-            <div id="tab-edital" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 mb-1">Grade Integrada: TJSP, PMSP, Direito UMC & Vet UMC</h3>
-                    <p class="text-xs text-slate-500 mb-4">Acompanhe seu percentual de conclusão dos estudos de ponta a ponta.</p>
-                    <div class="w-full bg-slate-100 h-3 rounded-full overflow-hidden mb-6">
-                        <div id="progress-bar" class="bg-emerald-500 h-full transition-all duration-500" style="width: 0%"></div>
-                    </div>
-                    <div id="edital-list" class="space-y-4"></div>
-                </div>
-            </div>
-
-            <!-- CONTEÚDO DA ABA: CADERNO DE ERROS -->
-            <div id="tab-erros" class="hidden space-y-6">
-                <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
-                    <h3 class="text-lg font-bold text-slate-900 mb-1">Caderno de Erros Registrados</h3>
-                    <p class="text-xs text-slate-500 mb-4">Revise o racional dos seus erros para eliminar falhas no dia da prova.</p>
-                    <div id="errors-container" class="space-y-4"></div>
-                </div>
-            </div>
-
+            <!-- Spin Button -->
+            <button id="spinBtn" onclick="spinWheel()" class="mt-7 px-10 py-3.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 text-purple-950 font-black text-lg sm:text-xl tracking-wider shadow-2xl hover:shadow-yellow-400/50 hover:scale-105 active:scale-95 transition-all border-2 border-yellow-200 uppercase flex items-center gap-3">
+                <span>🥁</span>
+                <span>GIRAR ROLETA</span>
+                <span>✨</span>
+            </button>
         </div>
 
     </main>
 
-    <!-- MODAL DE CELEBRAÇÃO / BONEQUINHO DA JUSTIÇA FELIZ COM CONFETES 🎉 -->
-    <div id="celebration-modal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl text-center border-4 border-amber-400 relative overflow-hidden">
-            <div class="bg-amber-100 w-24 h-24 rounded-full flex items-center justify-center mx-auto shadow-inner animate-justice">
-                <i class="fa-solid fa-scale-balanced text-5xl text-amber-500"></i>
+    <!-- Footer Information -->
+    <footer class="mt-4 mb-2 text-center text-purple-300/70 text-xs z-10">
+        <p>Sorteio Temático | Contratos e Doações em Direito Civil</p>
+    </footer>
+
+    <!-- Result Modal -->
+    <div id="resultModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
+        <div class="glass-card bg-purple-950/95 border-2 border-amber-400/70 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl animate-modal relative overflow-hidden">
+            
+            <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none"></div>
+            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-purple-500/30 rounded-full blur-2xl pointer-events-none"></div>
+
+            <div id="modalIcon" class="text-6xl sm:text-7xl my-2 animate-bounce">
+                🎁
             </div>
-            <div>
-                <span class="text-xs font-extrabold uppercase tracking-widest bg-emerald-100 text-emerald-800 px-3 py-1 rounded-full">Meta Conquistada!</span>
-                <h3 class="text-2xl font-black text-slate-900 mt-2">PARABÉNS!</h3>
-                <p id="celebration-msg" class="text-xs text-slate-600 mt-1">Você atingiu a sua meta de acertos na plataforma! O sucesso nos exames e na faculdade UMC está garantido.</p>
+
+            <h3 class="title-font text-amber-300 text-sm font-bold uppercase tracking-widest">
+                Contrato Cumprido!
+            </h3>
+
+            <div id="modalPrizeTitle" class="title-font text-2xl sm:text-3xl font-black text-white my-2 leading-tight">
+                Nome do Prêmio
             </div>
-            <button onclick="closeCelebrationModal()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-xl transition shadow-md text-xs">
-                Continuar Estudando 💪
+
+            <p id="modalPrizeDesc" class="text-purple-100 text-sm font-bold bg-purple-900/80 py-2.5 px-4 rounded-xl border border-purple-600/60 mb-4">
+                Descrição do prêmio
+            </p>
+
+            <p id="modalLegalQuote" class="text-amber-200/90 text-xs italic mb-6">
+                "Considera-se doação o contrato em que uma pessoa, por liberalidade, transfere do seu patrimônio bens ou vantagens para o de outra." (Art. 538, Código Civil)
+            </p>
+
+            <button onclick="closeModal()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-purple-950 font-black text-lg shadow-lg hover:shadow-yellow-500/30 active:scale-95 transition-all uppercase tracking-wide">
+                Receber Doação 🍬
             </button>
         </div>
     </div>
 
-    <!-- MODAL PARA ADICIONAR NOVO LOGIN -->
-    <div id="add-account-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-base font-bold text-slate-900">Adicionar Novo Perfil de Acesso</h3>
-            <p class="text-xs text-slate-500">Crie um novo login para alternar rapidamente na plataforma.</p>
-            <div id="modal-error" class="hidden bg-red-50 text-red-700 p-2 text-xs rounded border border-red-200"></div>
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">E-mail</label>
-                <input type="email" id="modal-email" placeholder="novo@email.com" class="w-full px-3 py-2 border rounded-xl text-xs">
-            </div>
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Senha</label>
-                <input type="password" id="modal-password" placeholder="••••••••" class="w-full px-3 py-2 border rounded-xl text-xs">
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button onclick="closeAddAccountModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-xl text-xs font-bold">Cancelar</button>
-                <button onclick="createNewAccountFromModal()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Cadastrar e Acessar</button>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL PARA ALTERAR SENHA (USUÁRIO LOGADO) -->
-    <div id="change-password-modal" class="hidden fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl max-w-sm w-full p-6 space-y-4 shadow-2xl">
-            <h3 class="text-base font-bold text-slate-900">Alterar Senha de Acesso</h3>
-            <p class="text-xs text-slate-500">Defina uma nova senha para a sua conta atual.</p>
-            <div id="change-pass-error" class="hidden bg-red-50 text-red-700 p-2 text-xs rounded border border-red-200"></div>
-            <div id="change-pass-success" class="hidden bg-emerald-50 text-emerald-700 p-2 text-xs rounded border border-emerald-200"></div>
-            <div>
-                <label class="block text-xs font-bold uppercase text-slate-500 mb-1">Nova Senha</label>
-                <input type="password" id="new-pass-input" placeholder="••••••••" class="w-full px-3 py-2 border rounded-xl text-xs">
-            </div>
-            <div class="flex gap-2 pt-2">
-                <button onclick="closeChangePasswordModal()" class="flex-1 bg-slate-200 hover:bg-slate-300 py-2 rounded-xl text-xs font-bold">Cancelar</button>
-                <button onclick="submitChangePassword()" class="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-xl text-xs font-bold">Salvar Nova Senha</button>
-            </div>
-        </div>
-    </div>
-
-    <footer class="bg-white border-t border-slate-200 py-4 mt-auto">
-        <div class="max-w-7xl mx-auto px-4 text-center text-xs text-slate-400">
-            Prep Master • Sistema de Alta Performance de Estudos (TJSP, PMSP, Direito & Vet UMC)
-        </div>
-    </footer>
-
-    <!-- LÓGICA E DADOS DA APLICAÇÃO -->
+    <!-- Application Logic & Sound Engine -->
     <script>
-        let currentUser = null;
-        let isRegistering = false;
-        let isRecovering = false;
-        let currentQuestionIndex = 0;
-        let currentFlashcardIndex = 0;
-        let isFlashcardFlipped = false;
-
-        let userErrors = [];
-        let editalProgress = {};
-        let userStats = { correct: 0, total: 0, bySubject: {} };
-        let userGoal = 80;
-
-        let chartOverallInstance = null;
-        let chartSubjectsInstance = null;
-
-        const materiasBase = [
-            { id: "TJSP_Normas", nome: "NCGJ (Normas da Corregedoria TJSP)", artigos: ["Art. 45 - Livros e Registros", "Art. 98 - Atos Oficiais", "Art. 102 - Certidões e Digitalização"] },
-            { id: "TJSP_ProcCivil", nome: "Direito Processual Civil (CPC / VUNESP)", artigos: ["Art. 219 - Prazos em Dias Úteis", "Art. 784, III - Título Executivo Extrajudicial", "Art. 334 - Conciliação e Mediação"] },
-            { id: "TJSP_ProcPenal", nome: "Direito Processual Penal (CPP / VUNESP)", artigos: ["Art. 362 - Citação por Hora Certa", "Art. 366 - Suspensão do Processo", "Art. 312 - Prisão Preventiva"] },
-            { id: "TJSP_Constitucional", nome: "Direito Constitucional (CF/88)", artigos: ["Art. 5º, XI - Inviolabilidade de Domicílio", "Art. 5º, LV - Contraditório e Ampla Defesa", "Art. 93 - Princípios do Judiciário"] },
-            { id: "PMSP_Constitucional", nome: "Constitucional & Administrativo (PMSP)", artigos: ["Estatuto dos Funcionários Públicos Municipais", "Lei Orgânica do Município de SP", "Poderes Administrativos e Atos"] },
-            { id: "PMSP_Legislacao", nome: "Legislação Específica PMSP", artigos: ["Plano Diretor Estratégico de SP", "Regime Jurídico Municipal", "Licitações e Contratos Públicos"] },
-            { id: "UMC_Contratos", nome: "Direito Civil: Contratos em Espécie (UMC)", artigos: ["Art. 422 - Boa-fé Objetiva", "Art. 481 - Compra e Venda", "Art. 593 - Prestação de Serviços"] },
-            { id: "UMC_CDC", nome: "Direito do Consumidor (CDC / UMC)", artigos: ["Art. 49 - Direito de Arrependimento (7 dias)", "Art. 14 - Responsabilidade Objetiva", "Art. 39 - Práticas Abusivas"] },
-            { id: "UMC_Penal", nome: "Direito Penal: Crimes Funcionais (UMC)", artigos: ["Art. 312 - Peculato", "Art. 316 - Concussão", "Art. 317 - Corrupção Passiva"] },
-            { id: "VET_Anatomia", nome: "Anatomia dos Animais Domésticos (Vet UMC)", artigos: ["Sistema Esquelético e Osteologia Veterinária", "Miologia e Aparelho Locomotor", "Esplanchnologia e Órgãos dos Sentidos"] },
-            { id: "VET_Farmacologia", nome: "Farmacologia e Terapêutica Veterinária", artigos: ["Farmacocinética e Farmacodinâmica em Cães e Gatos", "Anti-inflamatórios e Analgésicos", "Anestesiologia Veterinária Aplicada"] },
-            { id: "VET_Patologia", nome: "Patologia Geral e Clínica Veterinária", artigos: ["Processos Degenerativos e Necrose", "Inflamação Aguda e Crônica", "Interpretação de Exames Hematológicos"] },
-            { id: "VET_ClinicaMedica", nome: "Clínica Médica de Pequenos e Grandes Animais", artigos: ["Doenças Infectocontagiosas Veterinárias", "Gastroenterologia e Nefrologia Veterinária", "Obstetrícia e Reprodução Animal"] }
+        // 8 Slices matching all uploaded slice graphics & reference layout
+        const prizes = [
+            {
+                id: "ouro_branco",
+                title: "Ouro Branco",
+                subtext: "1 bombom",
+                bgColor: "#FEF08A", // Bright yellow
+                textColor: "#713F12",
+                imgSrc: "image_d871c7.jpg",
+                emojis: ["🍫", "⭐", "✨", "👑"],
+                confettiColors: ["#fde047", "#eab308", "#ffffff"]
+            },
+            {
+                id: "lua_cheia",
+                title: "Lua Cheia",
+                subtext: "1 bala",
+                bgColor: "#F472B6", // Pink
+                textColor: "#831843",
+                imgSrc: "image_28df3d.jpg",
+                emojis: ["🍬", "🌕", "💖", "✨"],
+                confettiColors: ["#f472b6", "#38bdf8", "#ffffff"]
+            },
+            {
+                id: "pirulito",
+                title: "Pirulito",
+                subtext: "1 unidade",
+                bgColor: "#E879F9", // Lilac / Pink
+                textColor: "#701A75",
+                imgSrc: "image_7bd00f.jpg",
+                emojis: ["🍭", "🌈", "✨", "💜"],
+                confettiColors: ["#e879f9", "#38bdf8", "#facc15"]
+            },
+            {
+                id: "premio_premium",
+                title: "Prêmio Premium",
+                subtext: "3 doces à escolha",
+                bgColor: "#A855F7", // Purple
+                textColor: "#FFFFFF",
+                imgSrc: "image_0cc782.jpg",
+                emojis: ["👑", "🍬", "🍫", "✨"],
+                confettiColors: ["#a855f7", "#eab308", "#ffffff"]
+            },
+            {
+                id: "super_premium",
+                title: "Super Premium",
+                subtext: "5 docinhos e um beijinho",
+                bgColor: "#8B5CF6", // Darker purple
+                textColor: "#FFFFFF",
+                imgSrc: "image_f2ac0f.jpg",
+                emojis: ["👑", "🍬", "💋", "🍫", "✨"],
+                confettiColors: ["#a855f7", "#eab308", "#ffffff", "#ec4899"]
+            },
+            {
+                id: "combo_docinho",
+                title: "Combo Docinho",
+                subtext: "1 bala + 1 pirulito",
+                bgColor: "#FBBF24", // Warm Yellow/Orange
+                textColor: "#78350F",
+                imgSrc: "image_dc4049.jpg",
+                emojis: ["🍫", "🍭", "🍬", "✨"],
+                confettiColors: ["#fbbf24", "#f472b6", "#eab308"]
+            },
+            {
+                id: "dia_azar",
+                title: "Dia de azar",
+                subtext: "Só 1 bala. Sem choro!",
+                bgColor: "#CBD5E1", // Grey/light blue
+                textColor: "#1E293B",
+                imgSrc: "image_e4ab55.jpg",
+                emojis: ["😭", "🍬", "😅", "🖤"],
+                confettiColors: ["#94a3b8", "#cbd5e1", "#64748b"]
+            },
+            {
+                id: "sorte_dobro",
+                title: "Sorte em Dobro",
+                subtext: "2 doces surpresa",
+                bgColor: "#C084FC", // Light Violet
+                textColor: "#3B0764",
+                imgSrc: "image_7bd00f.jpg",
+                emojis: ["🎁", "🎁", "💖", "✨"],
+                confettiColors: ["#c084fc", "#e879f9", "#fef08a"]
+            }
         ];
 
-        let questionsDb = [];
-        let qCounter = 1;
-        const questoesPorMateria = Math.ceil(5000 / materiasBase.length);
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const numPrizes = prizes.length;
+        const sliceAngle = (2 * Math.PI) / numPrizes;
 
-        materiasBase.forEach(m => {
-            for (let i = 1; i <= questoesPorMateria; i++) {
-                if (qCounter > 5000) break;
-                const art = m.artigos[(i - 1) % m.artigos.length];
-                const correctIdx = (i + qCounter) % 4;
+        let currentRotation = 0;
+        let isSpinning = false;
+        const loadedImages = {};
 
-                let alts = [
-                    `A aplicação da regra técnica ou dispositivo pertinente ao ${art} exige observância estrita aos preceitos científicos e legais.`,
-                    `O ${art} admite flexibilização irrestrita independentemente de protocolo prévio.`,
-                    `A norma disposta no ${art} aplica-se exclusivamente aos casos anteriores a 2020.`,
-                    `O descumprimento do prescrito no ${art} não gera qualquer tipo de sanção ou consequência prática.`
-                ];
-
-                if (correctIdx === 1) {
-                    alts = [
-                        `O ${art} admite flexibilização irrestrita independentemente de protocolo prévio.`,
-                        `A aplicação da regra técnica ou dispositivo pertinente ao ${art} exige observância estrita aos preceitos científicos e legais.`,
-                        `A norma disposta no ${art} aplica-se exclusivamente aos casos anteriores a 2020.`,
-                        `O descumprimento do prescrito no ${art} não gera qualquer tipo de sanção ou consequência prática.`
-                    ];
-                } else if (correctIdx === 2) {
-                    alts = [
-                        `A norma disposta no ${art} aplica-se exclusivamente aos casos anteriores a 2020.`,
-                        `O descumprimento do prescrito no ${art} não gera qualquer tipo de sanção ou consequência prática.`,
-                        `A aplicação da regra técnica ou dispositivo pertinente ao ${art} exige observância estrita aos preceitos científicos e legais.`,
-                        `O ${art} admite flexibilização irrestrita independentemente de protocolo prévio.`
-                    ];
-                } else if (correctIdx === 3) {
-                    alts = [
-                        `O descumprimento do prescrito no ${art} não gera qualquer tipo de sanção ou consequência prática.`,
-                        `A norma disposta no ${art} aplica-se exclusivamente aos casos anteriores a 2020.`,
-                        `O ${art} admite flexibilização irrestrita independentemente de protocolo prévio.`,
-                        `A aplicação da regra técnica ou dispositivo pertinente ao ${art} exige observância estrita aos preceitos científicos e legais.`
-                    ];
-                }
-
-                let enunciadosVariantes = [
-                    `[Questão #${qCounter}] Considerando os fundamentos de ${m.nome}, com ênfase em ${art}, assinale a alternativa CORRETA:`,
-                    `[Questão #${qCounter}] No âmbito de ${m.nome}, avaliando o tema ${art}, é correto afirmar que:`,
-                    `[Questão #${qCounter}] Em conformidade com a literatura e as diretrizes de ${m.nome} ( ${art} ), assinale a opção correta:`,
-                    `[Questão #${qCounter}] Analisando criticamente o regramento de ${m.nome} atinente a ${art}, assinale a alternativa adequada:`
-                ];
-
-                questionsDb.push({
-                    id: qCounter,
-                    materia: m.id,
-                    origem: m.nome,
-                    enunciado: enunciadosVariantes[i % enunciadosVariantes.length],
-                    alternativas: alts,
-                    correta: correctIdx,
-                    comentario: `Fundamentação teórica/legal: A alternativa ${String.fromCharCode(65 + correctIdx)} está CORRETA com base nas diretrizes oficiais da área de ${m.nome} (${art}). As demais opções apresentam desvios conceituais.`
-                });
-                qCounter++;
-            }
+        // Preload uploaded slice image assets
+        prizes.forEach((prize) => {
+            const img = new Image();
+            img.src = prize.imgSrc;
+            img.onload = () => {
+                loadedImages[prize.id] = img;
+                drawWheel();
+            };
         });
 
-        const rawFlashcardTemplates = [
-            { t: "NCGJ", q: "Qual a destinação dada aos mandados cumpridos negativos no TJSP?", a: "Devem ser arquivados em pasta própria ou digitalizados conforme provimento da Corregedoria." },
-            { t: "CPC", q: "Como se contam os prazos processuais em dias no CPC/2015?", a: "Computam-se apenas em dias úteis (Art. 219 CPC)." },
-            { t: "PMSP", q: "Qual a lei orgânica que rege o município de São Paulo?", a: "A Lei Orgânica do Município de São Paulo, promulgada em 1990." },
-            { t: "Civil", q: "O que estipula o princípio da boa-fé objetiva contratual (Art. 422 CC)?", a: "Dever de probidade, lealdade e cooperação recíproca entre as partes." },
-            { t: "Vet UMC", q: "Qual a principal função do tecido ósseo compacto nos animais domésticos?", a: "Suporte mecânico estrutural e proteção de órgãos vitais." },
-            { t: "Vet UMC", q: "O que avalia a farmacocinética em Medicina Veterinária?", a: "A absorção, distribuição, biotransformação e excreção dos fármacos no organismo animal." },
-            { t: "Vet UMC", q: "O que caracteriza clinicamente a inflamação aguda?", a: "Sinais cardinais: rubor, calor, tumor, dor e perda de função." },
-            { t: "CDC", q: "Qual o prazo de arrependimento para compras fora do estabelecimento (Art. 49 CDC)?", a: "7 dias a contar da assinatura ou recebimento do produto/serviço." },
-            { t: "Penal", q: "O que caracteriza o crime de Peculato (Art. 312 CP)?", a: "Apropriar-se o funcionário público de dinheiro ou bem móvel de que tem a posse em razão do cargo." }
-        ];
+        // --- WEB AUDIO API: DRUMROLL & CYMBAL CRASH SYNTHESIZER ---
+        let audioCtx = null;
+        let drumrollInterval = null;
 
-        let flashcardsDb = [];
-        while (flashcardsDb.length < 200) {
-            rawFlashcardTemplates.forEach(item => {
-                if (flashcardsDb.length < 200) {
-                    let suffix = flashcardsDb.length >= rawFlashcardTemplates.length ? ` [Revisão #${Math.floor(flashcardsDb.length / rawFlashcardTemplates.length) + 1}]` : "";
-                    flashcardsDb.push({
-                        q: `${item.q}${suffix} (${item.t})`,
-                        a: `${item.a} (Gabarito oficial consolidado).`
-                    });
-                }
+        function initAudio() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Realistic Synthesized Snare Drum Hit
+        function playSnareHit(volume = 0.5) {
+            if (!audioCtx) return;
+
+            const now = audioCtx.currentTime;
+
+            // Noise buffer for snare rattle
+            const bufferSize = audioCtx.sampleRate * 0.08;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const noise = audioCtx.createBufferSource();
+            noise.buffer = buffer;
+
+            const noiseFilter = audioCtx.createBiquadFilter();
+            noiseFilter.type = 'highpass';
+            noiseFilter.frequency.value = 1000;
+
+            const noiseEnvelope = audioCtx.createGain();
+            noiseEnvelope.gain.setValueAtTime(volume, now);
+            noiseEnvelope.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
+
+            noise.connect(noiseFilter);
+            noiseFilter.connect(noiseEnvelope);
+            noiseEnvelope.connect(audioCtx.destination);
+
+            // Drum shell tone oscillator
+            const osc = audioCtx.createOscillator();
+            osc.type = 'triangle';
+            osc.frequency.setValueAtTime(180, now);
+            osc.frequency.exponentialRampToValueAtTime(45, now + 0.05);
+
+            const oscEnvelope = audioCtx.createGain();
+            oscEnvelope.gain.setValueAtTime(volume * 0.7, now);
+            oscEnvelope.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
+
+            osc.connect(oscEnvelope);
+            oscEnvelope.connect(audioCtx.destination);
+
+            noise.start(now);
+            osc.start(now);
+            noise.stop(now + 0.07);
+            osc.stop(now + 0.05);
+        }
+
+        // Cymbal Crash + Victory Fanfare Sound
+        function playCymbalCrash() {
+            if (!audioCtx) return;
+            const now = audioCtx.currentTime;
+
+            // White noise burst for crash
+            const bufferSize = audioCtx.sampleRate * 1.2;
+            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
+            const output = buffer.getChannelData(0);
+            for (let i = 0; i < bufferSize; i++) {
+                output[i] = Math.random() * 2 - 1;
+            }
+
+            const crash = audioCtx.createBufferSource();
+            crash.buffer = buffer;
+
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'highpass';
+            filter.frequency.value = 3500;
+
+            const gain = audioCtx.createGain();
+            gain.gain.setValueAtTime(0.75, now);
+            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
+
+            crash.connect(filter);
+            filter.connect(gain);
+            gain.connect(audioCtx.destination);
+
+            crash.start(now);
+
+            // Victory brass chord
+            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
+            notes.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const noteGain = audioCtx.createGain();
+                osc.type = 'triangle';
+                osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+                
+                noteGain.gain.setValueAtTime(0.3, now + idx * 0.06);
+                noteGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8 + idx * 0.06);
+
+                osc.connect(noteGain);
+                noteGain.connect(audioCtx.destination);
+
+                osc.start(now + idx * 0.06);
+                osc.stop(now + 0.9 + idx * 0.06);
             });
         }
 
-        const editalData = [
-            { id: 'tjsp_ncgj', titulo: 'Concurso TJSP: Normas da Corregedoria & Processo', itens: ['Escrituração e livros cartorários', 'Contagem de prazos em dias úteis (CPC Art. 219)', 'Citação por hora certa e preventiva (CPP)'] },
-            { id: 'pmsp_geral', titulo: 'Concurso PMSP: Legislação Municipal', itens: ['Estatuto dos Funcionários Municipais de SP', 'Lei Orgânica do Município', 'Plano Diretor Estratégico'] },
-            { id: 'umc_civil', titulo: 'Direito UMC: Contratos & Consumidor', itens: ['Princípio da Boa-fé Objetiva e Função Social', 'Direito de Arrependimento de 7 dias (CDC)', 'Títulos Executivos Extrajudiciais'] },
-            { id: 'umc_vet', titulo: 'Medicina Veterinária UMC: Grade Acadêmica', itens: ['Anatomia Veterinária dos Animais Domésticos', 'Farmacologia, Anestesiologia e Terapêutica', 'Patologia Geral e Clínica Médica Veterinária'] }
-        ];
+        // Start Drumroll Sound
+        function startDrumroll(durationMs) {
+            initAudio();
+            if (drumrollInterval) clearInterval(drumrollInterval);
 
-        window.onload = function() {
-            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
-            if (!usersDb["Gabriel.myers@hotmail.com"]) {
-                usersDb["Gabriel.myers@hotmail.com"] = "Claro@9878";
-                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
-            }
+            let startTime = Date.now();
+            let intervalTime = 120;
 
-            const savedUser = localStorage.getItem('prep_tjsp_user');
-            if (savedUser && usersDb[savedUser]) {
-                loginUser(savedUser);
-            }
-        };
+            function step() {
+                let elapsed = Date.now() - startTime;
+                let progress = Math.min(elapsed / durationMs, 1);
 
-        function toggleAuthMode() {
-            isRegistering = !isRegistering;
-            isRecovering = false;
-            document.getElementById('auth-title').innerText = isRegistering ? 'Criar Nova Conta' : 'Acesse sua Conta';
-            document.getElementById('auth-submit-btn').innerText = isRegistering ? 'Cadastrar e Entrar' : 'Entrar no Sistema';
-            document.getElementById('auth-toggle-btn').innerText = isRegistering ? 'Já tem uma conta? Faça login' : 'Não tem uma conta? Cadastre-se';
-            document.getElementById('recovery-toggle-btn').classList.remove('hidden');
-            document.getElementById('password-field-container').style.display = 'block';
-            document.getElementById('auth-error').classList.add('hidden');
-            document.getElementById('auth-success').classList.add('hidden');
-        }
+                // Ramp up speed (shorter interval) and volume
+                intervalTime = Math.max(30, 110 * (1 - Math.pow(progress, 0.7)));
+                let volume = 0.3 + (progress * 0.5);
 
-        function toggleRecoveryMode() {
-            isRecovering = !isRecovering;
-            isRegistering = false;
-            const passField = document.getElementById('password-field-container');
-            const submitBtn = document.getElementById('auth-submit-btn');
-            const titleElem = document.getElementById('auth-title');
-            const toggleBtn = document.getElementById('auth-toggle-btn');
-            const recoveryToggle = document.getElementById('recovery-toggle-btn');
+                playSnareHit(volume);
 
-            if (isRecovering) {
-                titleElem.innerText = 'Recuperar Senha';
-                submitBtn.innerText = 'Redefinir e Cadastrar Nova Senha';
-                passField.style.display = 'block';
-                document.getElementById('auth-password').placeholder = 'Digite a sua nova senha';
-                toggleBtn.classList.add('hidden');
-                recoveryToggle.innerText = '← Voltar para o Login';
-            } else {
-                titleElem.innerText = 'Acesse sua Conta';
-                submitBtn.innerText = 'Entrar no Sistema';
-                document.getElementById('auth-password').placeholder = '••••••••';
-                toggleBtn.classList.remove('hidden');
-                recoveryToggle.innerText = 'Esqueceu a senha?';
-            }
-            document.getElementById('auth-error').classList.add('hidden');
-            document.getElementById('auth-success').classList.add('hidden');
-        }
-
-        function handleAuthSubmit() {
-            const email = document.getElementById('auth-email').value.trim();
-            const pass = document.getElementById('auth-password').value.trim();
-            const errorBox = document.getElementById('auth-error');
-            const successBox = document.getElementById('auth-success');
-
-            if (!email) {
-                errorBox.innerText = "Informe o seu e-mail.";
-                errorBox.classList.remove('hidden');
-                return;
-            }
-
-            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
-
-            if (isRecovering) {
-                if (!pass) {
-                    errorBox.innerText = "Digite a sua nova senha.";
-                    errorBox.classList.remove('hidden');
-                    return;
-                }
-                if (!usersDb[email]) {
-                    errorBox.innerText = "Este e-mail não está cadastrado na plataforma.";
-                    errorBox.classList.remove('hidden');
-                    return;
-                }
-                // Atualiza a senha
-                usersDb[email] = pass;
-                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
-                successBox.innerText = "Senha redefinida com sucesso! Faça login.";
-                successBox.classList.remove('hidden');
-                errorBox.classList.add('hidden');
-                setTimeout(() => { toggleRecoveryMode(); }, 1500);
-                return;
-            }
-
-            if (!pass) {
-                errorBox.innerText = "Preencha a senha.";
-                errorBox.classList.remove('hidden');
-                return;
-            }
-
-            if (isRegistering) {
-                if (usersDb[email]) {
-                    errorBox.innerText = "Este e-mail já está cadastrado. Faça login.";
-                    errorBox.classList.remove('hidden');
-                    return;
-                }
-                usersDb[email] = pass;
-                localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
-            } else {
-                if (!usersDb[email] || usersDb[email] !== pass) {
-                    errorBox.innerText = "E-mail ou senha incorretos.";
-                    errorBox.classList.remove('hidden');
-                    return;
+                if (elapsed < durationMs - 150) {
+                    drumrollInterval = setTimeout(step, intervalTime);
                 }
             }
 
-            loginUser(email);
+            step();
         }
 
-        function loginUser(email) {
-            currentUser = email;
-            localStorage.setItem('prep_tjsp_user', email);
-            
-            const userData = JSON.parse(localStorage.getItem('prep_master_data_' + email) || '{"errors":[], "edital":{}, "stats":{"correct":0, "total":0, "bySubject":{}}, "goal":80}');
-            userErrors = userData.errors || [];
-            editalProgress = userData.edital || {};
-            userStats = userData.stats || { correct: 0, total: 0, bySubject: {} };
-            userGoal = userData.goal || 80;
-
-            document.getElementById('user-goal-input').value = userGoal;
-
-            document.getElementById('auth-section').classList.add('hidden');
-            document.getElementById('dashboard-section').classList.remove('hidden');
-            document.getElementById('user-header-info').classList.remove('hidden');
-            
-            let displayName = email === "Gabriel.myers@hotmail.com" ? "Gabriel (Master)" : email;
-            document.getElementById('user-display-email').innerText = displayName;
-
-            updateAccountSwitcherOptions();
-            renderDashboard();
-            renderQuestion();
-            renderEdital();
-            renderFlashcard();
-            updateErrorBadge();
-        }
-
-        function updateAccountSwitcherOptions() {
-            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
-            let select = document.getElementById('account-switcher');
-            let html = '';
-            for (let email in usersDb) {
-                let selected = email === currentUser ? 'selected' : '';
-                let label = email === "Gabriel.myers@hotmail.com" ? "Gabriel (Master)" : email;
-                html += `<option value="${email}" ${selected}>${label}</option>`;
-            }
-            select.innerHTML = html;
-        }
-
-        function switchAccount(email) {
-            if (email && email !== currentUser) {
-                loginUser(email);
+        function stopDrumroll() {
+            if (drumrollInterval) {
+                clearTimeout(drumrollInterval);
+                drumrollInterval = null;
             }
         }
 
-        function openAddAccountModal() {
-            document.getElementById('modal-email').value = '';
-            document.getElementById('modal-password').value = '';
-            document.getElementById('modal-error').classList.add('hidden');
-            document.getElementById('add-account-modal').classList.remove('hidden');
-        }
+        // --- DRAW WHEEL CASINO STYLE ---
+        function drawWheel() {
+            const width = canvas.width;
+            const height = canvas.height;
+            const radius = width / 2;
+            const outerRimWidth = 60;
+            const innerRadius = radius - outerRimWidth;
 
-        function closeAddAccountModal() {
-            document.getElementById('add-account-modal').classList.add('hidden');
-        }
+            ctx.clearRect(0, 0, width, height);
 
-        function createNewAccountFromModal() {
-            const email = document.getElementById('modal-email').value.trim();
-            const pass = document.getElementById('modal-password').value.trim();
-            const errBox = document.getElementById('modal-error');
+            // 1. Outer Casino Rim
+            ctx.save();
+            ctx.beginPath();
+            ctx.arc(radius, radius, radius - 5, 0, 2 * Math.PI);
+            ctx.fillStyle = "#4C1D95";
+            ctx.fill();
+            ctx.lineWidth = 8;
+            ctx.strokeStyle = "#F59E0B";
+            ctx.stroke();
 
-            if (!email || !pass) {
-                errBox.innerText = "Preencha todos os campos.";
-                errBox.classList.remove('hidden');
-                return;
-            }
+            // 2. Inner Golden Border Accent
+            ctx.beginPath();
+            ctx.arc(radius, radius, innerRadius + 4, 0, 2 * Math.PI);
+            ctx.lineWidth = 6;
+            ctx.strokeStyle = "#FCD34D";
+            ctx.stroke();
 
-            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
-            if (usersDb[email]) {
-                errBox.innerText = "Este e-mail já existe.";
-                errBox.classList.remove('hidden');
-                return;
-            }
+            // 3. Draw Slices
+            for (let i = 0; i < numPrizes; i++) {
+                const prize = prizes[i];
+                const startAngle = i * sliceAngle;
+                const endAngle = startAngle + sliceAngle;
 
-            usersDb[email] = pass;
-            localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
-            closeAddAccountModal();
-            loginUser(email);
-        }
+                ctx.save();
 
-        function openChangePasswordModal() {
-            document.getElementById('new-pass-input').value = '';
-            document.getElementById('change-pass-error').classList.add('hidden');
-            document.getElementById('change-pass-success').classList.add('hidden');
-            document.getElementById('change-password-modal').classList.remove('hidden');
-        }
+                // Masking vector slice
+                ctx.beginPath();
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, innerRadius, startAngle, endAngle);
+                ctx.closePath();
 
-        function closeChangePasswordModal() {
-            document.getElementById('change-password-modal').classList.add('hidden');
-        }
+                ctx.fillStyle = prize.bgColor;
+                ctx.fill();
+                ctx.clip();
 
-        function submitChangePassword() {
-            const newPass = document.getElementById('new-pass-input').value.trim();
-            const errBox = document.getElementById('change-pass-error');
-            const successBox = document.getElementById('change-pass-success');
+                // Draw loaded image or fallback vector art
+                if (loadedImages[prize.id]) {
+                    ctx.save();
+                    ctx.translate(radius, radius);
+                    ctx.rotate(startAngle + sliceAngle / 2);
 
-            if (!newPass) {
-                errBox.innerText = "Digite a nova senha.";
-                errBox.classList.remove('hidden');
-                return;
-            }
+                    const img = loadedImages[prize.id];
+                    const imgSize = innerRadius * 1.15;
+                    ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
 
-            let usersDb = JSON.parse(localStorage.getItem('prep_tjsp_users_db') || '{}');
-            usersDb[currentUser] = newPass;
-            localStorage.setItem('prep_tjsp_users_db', JSON.stringify(usersDb));
+                    ctx.restore();
+                } else {
+                    // Styled Fallback rendering
+                    ctx.save();
+                    ctx.translate(radius, radius);
+                    ctx.rotate(startAngle + sliceAngle / 2);
+                    ctx.textAlign = "right";
+                    ctx.textBaseline = "middle";
 
-            successBox.innerText = "Senha alterada com sucesso!";
-            successBox.classList.remove('hidden');
-            errBox.classList.add('hidden');
+                    ctx.fillStyle = prize.textColor;
+                    ctx.font = "900 28px 'Fredoka', 'Nunito', sans-serif";
+                    ctx.fillText(prize.title, innerRadius - 35, -14);
 
-            setTimeout(() => { closeChangePasswordModal(); }, 1500);
-        }
+                    ctx.font = "700 18px 'Nunito', sans-serif";
+                    ctx.globalAlpha = 0.9;
+                    ctx.fillText(prize.subtext, innerRadius - 35, 20);
 
-        function logout() {
-            currentUser = null;
-            localStorage.removeItem('prep_tjsp_user');
-            document.getElementById('dashboard-section').classList.add('hidden');
-            document.getElementById('user-header-info').classList.add('hidden');
-            document.getElementById('auth-section').classList.remove('hidden');
-            document.getElementById('auth-email').value = '';
-            document.getElementById('auth-password').value = '';
-        }
-
-        function saveData() {
-            if (!currentUser) return;
-            const userData = { errors: userErrors, edital: editalProgress, stats: userStats, goal: userGoal };
-            localStorage.setItem('prep_master_data_' + currentUser, JSON.stringify(userData));
-        }
-
-        function switchTab(tabName) {
-            ['dashboard', 'questoes', 'flashcards', 'edital', 'erros'].forEach(t => {
-                document.getElementById('tab-' + t).classList.add('hidden');
-                document.getElementById('tab-btn-' + t).className = "flex-1 py-2.5 px-3 rounded-xl font-medium text-xs sm:text-sm transition flex items-center justify-center gap-2 text-slate-600 hover:bg-slate-100";
-            });
-            document.getElementById('tab-' + tabName).classList.remove('hidden');
-            document.getElementById('tab-btn-' + tabName).className = "flex-1 py-2.5 px-3 rounded-xl font-semibold text-xs sm:text-sm transition flex items-center justify-center gap-2 bg-indigo-600 text-white shadow-sm";
-
-            if (tabName === 'dashboard') renderDashboard();
-            if (tabName === 'erros') renderErrors();
-        }
-
-        function saveUserGoal() {
-            const val = parseInt(document.getElementById('user-goal-input').value) || 80;
-            userGoal = Math.min(100, Math.max(1, val));
-            document.getElementById('user-goal-input').value = userGoal;
-            saveData();
-            renderDashboard();
-        }
-
-        function renderDashboard() {
-            const wrong = userStats.total - userStats.correct;
-            const accuracy = userStats.total > 0 ? Math.round((userStats.correct / userStats.total) * 100) : 0;
-
-            document.getElementById('stat-total').innerText = userStats.total;
-            document.getElementById('stat-correct').innerText = userStats.correct;
-            document.getElementById('stat-wrong').innerText = wrong;
-            document.getElementById('stat-accuracy').innerText = accuracy + '%';
-
-            document.getElementById('goal-progress-text').innerText = `${accuracy}% / ${userGoal}%`;
-            const pctBar = Math.min(100, Math.round((accuracy / userGoal) * 100));
-            document.getElementById('goal-progress-bar').style.width = pctBar + '%';
-
-            const statusMsg = document.getElementById('goal-status-msg');
-            if (userStats.total > 5 && accuracy >= userGoal) {
-                statusMsg.innerText = `Sensacional! A sua taxa atual (${accuracy}%) ultrapassa a sua meta (${userGoal}%). Parabéns!`;
-            } else {
-                statusMsg.innerText = `Falta pouco! Continue praticando para alcançar ${userGoal}% de acertos.`;
-            }
-
-            renderCharts(accuracy, wrong);
-        }
-
-        function renderCharts(accuracy, wrong) {
-            const ctx1 = document.getElementById('chart-overall').getContext('2d');
-            if (chartOverallInstance) chartOverallInstance.destroy();
-            chartOverallInstance = new Chart(ctx1, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Acertos', 'Erros'],
-                    datasets: [{
-                        data: [userStats.correct, wrong],
-                        backgroundColor: ['#10b981', '#ef4444'],
-                        borderWidth: 0
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { position: 'bottom' } }
+                    ctx.restore();
                 }
-            });
 
-            const labels = materiasBase.map(m => m.id.split('_')[1]);
-            const dataPcts = materiasBase.map(m => {
-                const s = userStats.bySubject[m.id];
-                if (!s || s.total === 0) return 0;
-                return Math.round((s.correct / s.total) * 100);
-            });
+                ctx.restore();
 
-            const ctx2 = document.getElementById('chart-subjects').getContext('2d');
-            if (chartSubjectsInstance) chartSubjectsInstance.destroy();
-            chartSubjectsInstance = new Chart(ctx2, {
-                type: 'bar',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '% de Acerto',
-                        data: dataPcts,
-                        backgroundColor: '#6366f1',
-                        borderRadius: 8
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: { y: { beginAtZero: true, max: 100 } },
-                    plugins: { legend: { display: false } }
-                }
-            });
-        }
-
-        function triggerCelebration() {
-            document.getElementById('celebration-modal').classList.remove('hidden');
-            try {
-                confetti({
-                    particleCount: 150,
-                    spread: 80,
-                    origin: { y: 0.6 }
-                });
-            } catch(e) {
-                console.log("Confetti disparado");
-            }
-        }
-
-        function closeCelebrationModal() {
-            document.getElementById('celebration-modal').classList.add('hidden');
-        }
-
-        function resetAndRender() {
-            currentQuestionIndex = 0;
-            renderQuestion();
-        }
-
-        function renderQuestion() {
-            const materiaFilter = document.getElementById('filter-materia').value;
-            const filtered = materiaFilter === 'all' ? questionsDb : questionsDb.filter(q => q.materia === materiaFilter);
-            
-            if (filtered.length === 0) {
-                document.getElementById('question-card').innerHTML = `<p class="text-xs text-slate-500 text-center py-6">Nenhuma questão encontrada para este filtro.</p>`;
-                return;
+                // Slice Separator Line
+                ctx.beginPath();
+                ctx.moveTo(radius, radius);
+                ctx.arc(radius, radius, innerRadius, startAngle, endAngle);
+                ctx.closePath();
+                ctx.lineWidth = 5;
+                ctx.strokeStyle = "#FFFFFF";
+                ctx.stroke();
             }
 
-            if (currentQuestionIndex >= filtered.length) currentQuestionIndex = 0;
-            const q = filtered[currentQuestionIndex];
+            // 4. Draw Casino Lights (Bulbs) on Rim
+            const numBulbs = 32;
+            const bulbRadius = radius - (outerRimWidth / 2);
+            for (let b = 0; b < numBulbs; b++) {
+                const angle = (b * (2 * Math.PI / numBulbs));
+                const bx = radius + bulbRadius * Math.cos(angle);
+                const by = radius + bulbRadius * Math.sin(angle);
 
-            let html = `
-                <div class="flex justify-between items-center text-xs text-slate-400 font-semibold uppercase tracking-wider">
-                    <span class="bg-indigo-50 text-indigo-700 px-2.5 py-1 rounded-md border border-indigo-100">${q.origem}</span>
-                    <span>Questão ${currentQuestionIndex + 1} de ${filtered.length} (ID: #${q.id})</span>
-                </div>
-                <p class="text-sm font-semibold text-slate-900 mt-2">${q.enunciado}</p>
-                <div class="space-y-2 pt-2">
-            `;
+                ctx.save();
+                ctx.beginPath();
+                ctx.arc(bx, by, 9, 0, 2 * Math.PI);
+                ctx.fillStyle = (b % 2 === 0) ? "#FDE047" : "#FFFFFF";
+                ctx.shadowColor = "#FDE047";
+                ctx.shadowBlur = 10;
+                ctx.fill();
+                ctx.lineWidth = 2.5;
+                ctx.strokeStyle = "#78350F";
+                ctx.stroke();
+                ctx.restore();
+            }
 
-            q.alternativas.forEach((alt, idx) => {
-                html += `
-                    <button onclick="checkAnswer(${q.id}, ${idx})" id="alt-${idx}" class="w-full text-left p-3 rounded-xl border border-slate-200 hover:bg-indigo-50 hover:border-indigo-300 transition text-xs font-medium flex items-center gap-3">
-                        <span class="w-6 h-6 rounded-full bg-slate-100 flex items-center justify-center text-slate-600 font-bold shrink-0">${String.fromCharCode(65 + idx)}</span>
-                        <span>${alt}</span>
-                    </button>
-                `;
-            });
-
-            html += `</div><div id="feedback-box" class="hidden mt-4 p-4 rounded-xl text-xs"></div>`;
-            document.getElementById('question-card').innerHTML = html;
+            ctx.restore();
         }
 
-        function checkAnswer(questionId, selectedIdx) {
-            const q = questionsDb.find(item => item.id === questionId);
-            const feedbackBox = document.getElementById('feedback-box');
-            
-            q.alternativas.forEach((_, idx) => {
-                const btn = document.getElementById(`alt-${idx}`);
-                btn.disabled = true;
-                if (idx === q.correta) {
-                    btn.className = "w-full text-left p-3 rounded-xl border border-emerald-500 bg-emerald-50 text-emerald-900 font-medium flex items-center gap-3";
-                } else if (idx === selectedIdx) {
-                    btn.className = "w-full text-left p-3 rounded-xl border border-red-500 bg-red-50 text-red-900 font-medium flex items-center gap-3";
-                }
-            });
+        drawWheel();
 
-            userStats.total++;
-            if (!userStats.bySubject[q.materia]) userStats.bySubject[q.materia] = { correct: 0, total: 0 };
-            userStats.bySubject[q.materia].total++;
+        // SPIN LOGIC WITH DRUMROLL AND SMOOTH DECELERATION
+        function spinWheel() {
+            if (isSpinning) return;
+            isSpinning = true;
 
-            const wasGoalAlreadyMet = userStats.total > 5 && Math.round((userStats.correct / userStats.total) * 100) >= userGoal;
+            const spinBtn = document.getElementById('spinBtn');
+            spinBtn.disabled = true;
+            spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
 
-            if (selectedIdx === q.correta) {
-                userStats.correct++;
-                userStats.bySubject[q.materia].correct++;
-                feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-emerald-50 border border-emerald-200 text-emerald-800";
-                feedbackBox.innerHTML = `<strong>Resposta Correta!</strong> ${q.comentario}`;
-                userErrors = userErrors.filter(e => e.id !== q.id);
+            const spinDurationMs = 5000;
 
-                const isGoalMetNow = userStats.total > 5 && Math.round((userStats.correct / userStats.total) * 100) >= userGoal;
-                if (!wasGoalAlreadyMet && isGoalMetNow) {
-                    triggerCelebration();
-                }
-            } else {
-                feedbackBox.className = "mt-4 p-4 rounded-xl text-xs bg-red-50 border border-red-200 text-red-800";
-                feedbackBox.innerHTML = `<strong>Resposta Incorreta.</strong> ${q.comentario}`;
-                if (!userErrors.some(e => e.id === q.id)) {
-                    userErrors.push(q);
-                }
-            }
-            feedbackBox.classList.remove('hidden');
-            saveData();
-            updateErrorBadge();
+            // Trigger synthesized drumroll audio
+            startDrumroll(spinDurationMs);
+
+            const winningIndex = Math.floor(Math.random() * numPrizes);
+            const degreesPerSlice = 360 / numPrizes;
+
+            // Target angle so the selected slice lines up with 0° (the RIGHT arrow pointer)
+            const sliceCenterAngle = (winningIndex * degreesPerSlice) + (degreesPerSlice / 2);
+            const extraRotations = (6 + Math.floor(Math.random() * 3)) * 360;
+
+            const targetRotation = extraRotations + (360 - sliceCenterAngle);
+            const finalRotation = currentRotation + targetRotation + (360 - (currentRotation % 360));
+            currentRotation = finalRotation;
+
+            // Smooth CSS Transition Ease-Out
+            canvas.style.transition = `transform ${spinDurationMs}ms cubic-bezier(0.1, 0.85, 0.15, 1)`;
+            canvas.style.transform = `rotate(${finalRotation}deg)`;
 
             setTimeout(() => {
-                const card = document.getElementById('question-card');
-                if(!document.getElementById('next-btn')) {
-                    const nextBtn = document.createElement('button');
-                    nextBtn.id = 'next-btn';
-                    nextBtn.className = 'mt-4 w-full bg-slate-900 hover:bg-slate-800 text-white font-semibold py-2.5 rounded-xl text-xs transition';
-                    nextBtn.innerText = 'Próxima Questão →';
-                    nextBtn.onclick = () => { currentQuestionIndex++; renderQuestion(); };
-                    card.appendChild(nextBtn);
-                }
+                isSpinning = false;
+                spinBtn.disabled = false;
+                spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+
+                stopDrumroll();
+                playCymbalCrash();
+                handleWin(prizes[winningIndex]);
+            }, spinDurationMs);
+        }
+
+        // Handle Victory Visuals & Confetti Explosion
+        function handleWin(prize) {
+            triggerConfetti(prize.confettiColors);
+            triggerEmojiExplosion(prize.emojis);
+
+            setTimeout(() => {
+                document.getElementById('modalIcon').innerText = prize.emojis[0] || '🎉';
+                document.getElementById('modalPrizeTitle').innerText = prize.title;
+                document.getElementById('modalPrizeDesc').innerText = prize.subtext;
+                document.getElementById('resultModal').classList.remove('hidden');
             }, 200);
         }
 
-        function renderFlashcard() {
-            const fc = flashcardsDb[currentFlashcardIndex];
-            const textElem = document.getElementById('flashcard-text');
-            isFlashcardFlipped = false;
-            textElem.innerHTML = `<span class="text-amber-400 font-bold block text-xs uppercase tracking-wider mb-2">Pergunta (Clique para revelar a resposta)</span>${fc.q}`;
-            document.getElementById('flashcard-counter').innerText = `Cartão ${currentFlashcardIndex + 1} de ${flashcardsDb.length}`;
-        }
-
-        function flipFlashcard() {
-            const fc = flashcardsDb[currentFlashcardIndex];
-            const textElem = document.getElementById('flashcard-text');
-            isFlashcardFlipped = !isFlashcardFlipped;
-            if (isFlashcardFlipped) {
-                textElem.innerHTML = `<span class="text-emerald-400 font-bold block text-xs uppercase tracking-wider mb-2">Resposta / Fundamento Legal</span>${fc.a}`;
-            } else {
-                textElem.innerHTML = `<span class="text-amber-400 font-bold block text-xs uppercase tracking-wider mb-2">Pergunta (Clique para revelar a resposta)</span>${fc.q}`;
-            }
-        }
-
-        function nextFlashcard() {
-            currentFlashcardIndex = (currentFlashcardIndex + 1) % flashcardsDb.length;
-            renderFlashcard();
-        }
-
-        function prevFlashcard() {
-            currentFlashcardIndex = (currentFlashcardIndex - 1 + flashcardsDb.length) % flashcardsDb.length;
-            renderFlashcard();
-        }
-
-        function updateErrorBadge() {
-            document.getElementById('error-count-badge').innerText = userErrors.length;
-        }
-
-        function renderEdital() {
-            let html = '';
-            let totalItens = 0;
-            let concluidos = 0;
-
-            editalData.forEach(bloco => {
-                html += `<div class="border border-slate-200 rounded-xl p-4 bg-slate-50/50 space-y-2">
-                    <h4 class="font-bold text-xs text-indigo-950 uppercase tracking-wide flex items-center gap-2">
-                        <i class="fa-solid fa-bookmark text-amber-500"></i> ${bloco.titulo}
-                    </h4>
-                    <div class="space-y-1.5 pt-1">`;
-                
-                bloco.itens.forEach((item, idx) => {
-                    totalItens++;
-                    const key = bloco.id + '_' + idx;
-                    const isChecked = editalProgress[key] ? 'checked' : '';
-                    if (isChecked) concluidos++;
-
-                    html += `
-                        <label class="flex items-center gap-3 text-xs text-slate-700 cursor-pointer p-1.5 hover:bg-white rounded-lg transition">
-                            <input type="checkbox" ${isChecked} onchange="toggleEditalItem('${key}')" class="w-4 h-4 rounded text-indigo-600 focus:ring-indigo-500">
-                            <span class="${isChecked ? 'line-through text-slate-400' : ''}">${item}</span>
-                        </label>
-                    `;
+        // Canvas Confetti Library Integration
+        function triggerConfetti(colors) {
+            if (typeof confetti === 'function') {
+                confetti({
+                    particleCount: 90,
+                    angle: 60,
+                    spread: 65,
+                    origin: { x: 0, y: 0.7 },
+                    colors: colors
                 });
-                html += `</div></div>`;
-            });
+                confetti({
+                    particleCount: 90,
+                    angle: 120,
+                    spread: 65,
+                    origin: { x: 1, y: 0.7 },
+                    colors: colors
+                });
 
-            document.getElementById('edital-list').innerHTML = html;
-            const pct = totalItens > 0 ? Math.round((concluidos / totalItens) * 100) : 0;
-            document.getElementById('progress-bar').style.width = pct + '%';
-        }
-
-        function toggleEditalItem(key) {
-            editalProgress[key] = !editalProgress[key];
-            saveData();
-            renderEdital();
-        }
-
-        function renderErrors() {
-            const container = document.getElementById('errors-container');
-            if (userErrors.length === 0) {
-                container.innerHTML = `<p class="text-xs text-slate-400 text-center py-8">Nenhuma questão errada no momento. Parabéns!</p>`;
-                return;
+                setTimeout(() => {
+                    confetti({
+                        particleCount: 130,
+                        spread: 100,
+                        origin: { y: 0.55 },
+                        colors: colors
+                    });
+                }, 250);
             }
+        }
 
-            let html = '';
-            userErrors.forEach(q => {
-                html += `
-                    <div class="border border-red-100 bg-red-50/40 rounded-xl p-4 space-y-2">
-                        <span class="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-0.5 rounded-md uppercase">${q.origem}</span>
-                        <p class="text-xs font-semibold text-slate-900">${q.enunciado}</p>
-                        <p class="text-xs text-slate-600 bg-white p-3 rounded-lg border border-red-100"><strong>Fundamentação:</strong> ${q.comentario}</p>
-                    </div>
-                `;
-            });
-            container.innerHTML = html;
+        // Floating Emojis Explosion
+        function triggerEmojiExplosion(emojis) {
+            const particleCount = 30;
+
+            for (let i = 0; i < particleCount; i++) {
+                setTimeout(() => {
+                    const emoji = document.createElement('div');
+                    emoji.className = 'floating-emoji text-3xl sm:text-5xl';
+                    emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
+
+                    const startX = window.innerWidth / 2 + (Math.random() * 140 - 70);
+                    const startY = window.innerHeight / 2 + (Math.random() * 100 - 50);
+
+                    const spreadX = (Math.random() * 320 - 160) + 'px';
+                    const rotation = (Math.random() * 360 - 180) + 'deg';
+
+                    emoji.style.left = `${startX}px`;
+                    emoji.style.top = `${startY}px`;
+                    emoji.style.setProperty('--spread-x', spreadX);
+                    emoji.style.setProperty('--rotation', rotation);
+
+                    document.body.appendChild(emoji);
+
+                    setTimeout(() => {
+                        emoji.remove();
+                    }, 2600);
+                }, i * 40);
+            }
+        }
+
+        function closeModal() {
+            document.getElementById('resultModal').classList.add('hidden');
         }
     </script>
 </body>
