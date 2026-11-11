@@ -3,661 +3,633 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Roleta dos Docinhos - Direito Civil</title>
-
-    <!-- Tailwind CSS CDN -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Canvas Confetti CDN -->
+    <title>Roleta dos Docinhos - Direito Civil: Contratos e Doações</title>
     <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
-
-    <!-- Google Fonts -->
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700;900&family=Nunito:wght@400;700;900&family=Shrikhand&display=swap" rel="stylesheet">
-
     <style>
+        @import url('https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@600;800&display=swap');
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
         body {
             font-family: 'Nunito', sans-serif;
-            background: radial-gradient(circle at center, #2e1065, #1e0034, #0f001a);
+            background: radial-gradient(circle at center, #3b175c 0%, #1a082b 100%);
+            color: #fff;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow-x: hidden;
+            padding: 15px;
         }
 
-        .title-font {
-            font-family: 'Fredoka', sans-serif;
+        .header {
+            text-align: center;
+            margin-bottom: 18px;
+            z-index: 10;
         }
 
-        .fancy-font {
-            font-family: 'Shrikhand', cursive;
+        .header h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 2.1rem;
+            color: #ffd54f;
+            text-shadow: 0 4px 0 #5d107a, 0 6px 15px rgba(0, 0, 0, 0.6);
+            letter-spacing: 1px;
         }
 
-        /* Glassmorphism panel */
-        .glass-card {
-            background: rgba(255, 255, 255, 0.08);
-            backdrop-filter: blur(14px);
-            -webkit-backdrop-filter: blur(14px);
-            border: 1px solid rgba(255, 255, 255, 0.15);
+        .header p {
+            font-size: 1rem;
+            color: #e1bee7;
+            margin-top: 4px;
+            font-weight: 600;
         }
 
-        /* Wheel Shadow & Glow */
-        .wheel-glow {
-            box-shadow: 0 0 60px rgba(168, 85, 247, 0.45), 0 20px 50px rgba(0, 0, 0, 0.85);
+        .wheel-stage {
+            position: relative;
+            width: 430px;
+            height: 430px;
+            max-width: 92vw;
+            max-height: 92vw;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 10px 0;
         }
 
-        /* Side pointer pulse animation */
-        @keyframes pulse-right-pointer {
-            0%, 100% { transform: translateY(-50%) scale(1); }
-            50% { transform: translateY(-50%) scale(1.15); }
+        /* Aro externo estilo cassino com luzes */
+        .casino-rim {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            background: linear-gradient(145deg, #6a1b9a, #38006b);
+            padding: 20px;
+            box-shadow: 
+                0 0 0 6px #ffca28,
+                0 15px 35px rgba(0, 0, 0, 0.8),
+                inset 0 0 20px rgba(0, 0, 0, 0.7);
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .pointer-right-anim {
-            animation: pulse-right-pointer 1.2s infinite ease-in-out;
+        .bulb {
+            position: absolute;
+            width: 11px;
+            height: 11px;
+            border-radius: 50%;
+            background: #fff9c4;
+            box-shadow: 0 0 8px #ffeb3b, 0 0 14px #ff9800;
+            top: 50%;
+            left: 50%;
+            transform-origin: 0 0;
+            animation: blink 1.2s infinite alternate;
         }
 
-        /* Floating emojis overlay */
-        .floating-emoji {
-            position: fixed;
-            pointer-events: none;
-            z-index: 99;
+        .bulb:nth-child(even) {
+            animation-delay: 0.6s;
+        }
+
+        @keyframes blink {
+            0% { opacity: 0.4; transform: scale(0.85); }
+            100% { opacity: 1; transform: scale(1.15); }
+        }
+
+        .canvas-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            box-shadow: inset 0 0 15px rgba(0,0,0,0.6);
+            border: 4px solid #ffd54f;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+            display: block;
+            transition: transform 5s cubic-bezier(0.12, 0.88, 0.18, 1);
+        }
+
+        /* Centro da Roleta */
+        .center-hub {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            width: 105px;
+            height: 105px;
+            border-radius: 50%;
+            background: radial-gradient(circle at 30% 30%, #7b1fa2, #310a47);
+            border: 5px solid #ffd54f;
+            box-shadow: 0 6px 18px rgba(0,0,0,0.7), inset 0 0 10px rgba(255,213,79,0.5);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            z-index: 15;
             user-select: none;
-            animation: floatUpAndFade 2.6s cubic-bezier(0.25, 1, 0.5, 1) forwards;
         }
 
-        @keyframes floatUpAndFade {
-            0% {
-                opacity: 0;
-                transform: translate(-50%, 0) scale(0.3) rotate(0deg);
-            }
-            15% {
-                opacity: 1;
-                transform: translate(-50%, -30px) scale(1.4) rotate(15deg);
-            }
-            100% {
-                opacity: 0;
-                transform: translate(calc(-50% + var(--spread-x)), -320px) scale(0.8) rotate(var(--rotation));
-            }
+        .center-hub span {
+            font-family: 'Fredoka One', cursive;
+            color: #ffd54f;
+            font-size: 0.82rem;
+            line-height: 1.1;
+            text-shadow: 1px 2px 3px rgba(0,0,0,0.8);
         }
 
-        /* Modal Pop Animation */
-        @keyframes modalPop {
-            0% { transform: scale(0.7) translateY(30px); opacity: 0; }
-            100% { transform: scale(1) translateY(0); opacity: 1; }
+        /* Ponteiro Lateral Direito */
+        .pointer-right {
+            position: absolute;
+            right: -14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 0;
+            border-top: 20px solid transparent;
+            border-bottom: 20px solid transparent;
+            border-right: 36px solid #ffffff;
+            filter: drop-shadow(-3px 4px 5px rgba(0,0,0,0.7));
+            z-index: 25;
         }
 
-        .animate-modal {
-            animation: modalPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards;
+        .pointer-right::after {
+            content: '';
+            position: absolute;
+            right: -33px;
+            top: -13px;
+            border-top: 13px solid transparent;
+            border-bottom: 13px solid transparent;
+            border-right: 24px solid #ffca28;
+        }
+
+        .spin-btn {
+            margin-top: 22px;
+            background: linear-gradient(180deg, #ffeb3b 0%, #fbc02d 100%);
+            color: #38006b;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.4rem;
+            padding: 14px 45px;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            box-shadow: 0 6px 0 #c49000, 0 12px 25px rgba(0,0,0,0.5);
+            transition: all 0.15s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .spin-btn:hover:not(:disabled) {
+            transform: translateY(-2px);
+            filter: brightness(1.05);
+        }
+
+        .spin-btn:active:not(:disabled) {
+            transform: translateY(4px);
+            box-shadow: 0 2px 0 #c49000, 0 5px 10px rgba(0,0,0,0.5);
+        }
+
+        .spin-btn:disabled {
+            background: #9e9e9e;
+            color: #424242;
+            box-shadow: 0 4px 0 #616161;
+            cursor: not-allowed;
+        }
+
+        /* Modal de Resultado */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(15, 5, 25, 0.82);
+            backdrop-filter: blur(4px);
+            z-index: 100;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-box {
+            background: linear-gradient(145deg, #ffffff, #f3e5f5);
+            color: #2c073d;
+            border-radius: 24px;
+            padding: 30px 25px;
+            max-width: 400px;
+            width: 100%;
+            text-align: center;
+            border: 5px solid #ffca28;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.8);
+            animation: bounceIn 0.45s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        @keyframes bounceIn {
+            0% { transform: scale(0.5); opacity: 0; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .modal-emoji {
+            font-size: 3.5rem;
+            margin-bottom: 8px;
+        }
+
+        .modal-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.7rem;
+            color: #6a1b9a;
+            margin-bottom: 10px;
+        }
+
+        .modal-prize {
+            background: #ffecb3;
+            border: 2px dashed #ff8f00;
+            border-radius: 12px;
+            padding: 12px;
+            font-size: 1.3rem;
+            font-weight: 800;
+            color: #bf360c;
+            margin-bottom: 15px;
+        }
+
+        .law-note {
+            font-size: 0.88rem;
+            color: #4a148c;
+            background: rgba(106, 27, 154, 0.08);
+            padding: 10px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+            line-height: 1.35;
+        }
+
+        .close-btn {
+            background: #6a1b9a;
+            color: #fff;
+            font-family: 'Fredoka One', cursive;
+            font-size: 1.1rem;
+            padding: 10px 30px;
+            border: none;
+            border-radius: 30px;
+            cursor: pointer;
+            box-shadow: 0 4px 0 #38006b;
+        }
+
+        .close-btn:hover {
+            background: #7b1fa2;
+        }
+
+        /* Emojis voadores */
+        .floating-candy {
+            position: fixed;
+            font-size: 2.2rem;
+            pointer-events: none;
+            z-index: 90;
+            animation: flyUp 2.2s ease-out forwards;
+        }
+
+        @keyframes flyUp {
+            0% { transform: translateY(0) scale(0.5) rotate(0deg); opacity: 1; }
+            100% { transform: translateY(-450px) scale(1.4) rotate(360deg); opacity: 0; }
         }
     </style>
 </head>
-<body class="text-white flex flex-col justify-between items-center p-4 min-h-screen">
+<body>
 
-    <!-- Header Section -->
-    <header class="text-center mt-2 mb-3 z-10 w-full max-w-2xl">
-        <div class="inline-flex items-center gap-2 px-4 py-1 rounded-full bg-amber-400/20 border border-amber-300/40 text-amber-300 text-xs sm:text-sm font-semibold mb-2 shadow-lg">
-            <span>⚖️</span>
-            <span>Direito Civil — Contratos & Doações</span>
+    <div class="header">
+        <h1>⚖️ Roleta dos Docinhos</h1>
+        <p>Direito Civil • Contratos e Doações (Art. 538 CC)</p>
+    </div>
+
+    <div class="wheel-stage">
+        <div class="casino-rim" id="casinoRim">
+            <div class="canvas-wrapper">
+                <canvas id="wheelCanvas" width="600" height="600"></canvas>
+            </div>
+            <div class="center-hub">
+                <span>🎁<br>Roleta<br>dos<br>Docinhos</span>
+            </div>
         </div>
-        <h1 class="title-font text-3xl sm:text-5xl font-black tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-amber-200 via-yellow-300 to-amber-400 drop-shadow-md">
-            ROLETA DOS DOCINHOS
-        </h1>
-        <p class="text-purple-200 text-xs sm:text-sm mt-1 opacity-90 font-medium">
-            Gire a roleta e descubra quem vai levar a doação doce de hoje! 🍬
-        </p>
-    </header>
+        <div class="pointer-right"></div>
+    </div>
 
-    <!-- Main Content Container -->
-    <main class="flex flex-col items-center justify-center my-auto w-full max-w-lg relative z-10">
+    <button class="spin-btn" id="spinBtn" onclick="iniciarGiro()">GIRAR ROLETA</button>
 
-        <!-- Wheel Outer Box -->
-        <div class="relative flex flex-col items-center my-2">
-
-            <!-- Right Pointer Arrow (pointing LEFT onto wheel slice at 0° angle) -->
-            <div class="absolute right-[-24px] sm:right-[-32px] top-1/2 -translate-y-1/2 z-30 pointer-right-anim filter drop-shadow-2xl">
-                <svg width="52" height="46" viewBox="0 0 48 42" fill="none" xmlns="http://www.w3.org/2000/svg" class="sm:w-16 sm:h-14">
-                    <path d="M4 21L40 3L30 21L40 39L4 21Z" fill="#F8FAFC" stroke="#334155" stroke-width="3.5" stroke-linejoin="round"/>
-                    <path d="M4 21L36 7.5L28 21L36 34.5L4 21Z" fill="#E2E8F0"/>
-                </svg>
+    <!-- Modal de Resultado -->
+    <div class="modal-overlay" id="modalOverlay">
+        <div class="modal-box">
+            <div class="modal-emoji" id="modalEmoji">🍬</div>
+            <div class="modal-title">Doação Concluída!</div>
+            <div class="modal-prize" id="modalPrize">Prêmio</div>
+            <div class="law-note">
+                <strong>Art. 538 do Código Civil:</strong> Considera-se doação o contrato em que uma pessoa, por liberalidade, transfere do seu patrimônio bens ou vantagens para o de outra.
             </div>
-
-            <!-- Wheel Canvas Frame -->
-            <div class="wheel-glow relative w-[340px] h-[340px] sm:w-[450px] sm:h-[450px] rounded-full p-2 bg-gradient-to-b from-purple-900 to-slate-950 border-4 border-amber-400/80">
-                
-                <!-- Canvas Element -->
-                <canvas id="wheelCanvas" width="900" height="900" class="w-full h-full rounded-full cursor-pointer"></canvas>
-
-                <!-- Center Knob ("Roleta dos Docinhos") -->
-                <div id="centerKnob" onclick="spinWheel()" class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-24 h-24 sm:w-32 sm:h-32 rounded-full bg-gradient-to-b from-purple-800 via-purple-900 to-slate-950 border-4 border-amber-400 shadow-2xl flex flex-col items-center justify-center z-20 cursor-pointer hover:scale-105 active:scale-95 transition-all text-center p-1">
-                    <span class="text-amber-300 text-xs sm:text-sm">🎁</span>
-                    <span class="fancy-font text-amber-300 text-xs sm:text-base leading-tight tracking-wide drop-shadow">
-                        Roleta<br><span class="text-white">dos</span><br><span class="text-yellow-300">Docinhos</span>
-                    </span>
-                </div>
-            </div>
-
-            <!-- Spin Button -->
-            <button id="spinBtn" onclick="spinWheel()" class="mt-7 px-10 py-3.5 rounded-full bg-gradient-to-r from-yellow-400 via-amber-400 to-yellow-500 hover:from-yellow-300 hover:to-amber-300 text-purple-950 font-black text-lg sm:text-xl tracking-wider shadow-2xl hover:shadow-yellow-400/50 hover:scale-105 active:scale-95 transition-all border-2 border-yellow-200 uppercase flex items-center gap-3">
-                <span>🥁</span>
-                <span>GIRAR ROLETA</span>
-                <span>✨</span>
-            </button>
-        </div>
-
-    </main>
-
-    <!-- Footer Information -->
-    <footer class="mt-4 mb-2 text-center text-purple-300/70 text-xs z-10">
-        <p>Sorteio Temático | Contratos e Doações em Direito Civil</p>
-    </footer>
-
-    <!-- Result Modal -->
-    <div id="resultModal" class="fixed inset-0 bg-black/85 backdrop-blur-md z-50 hidden flex items-center justify-center p-4">
-        <div class="glass-card bg-purple-950/95 border-2 border-amber-400/70 rounded-3xl p-6 sm:p-8 max-w-sm w-full text-center shadow-2xl animate-modal relative overflow-hidden">
-            
-            <div class="absolute -top-12 -left-12 w-32 h-32 bg-amber-400/20 rounded-full blur-2xl pointer-events-none"></div>
-            <div class="absolute -bottom-12 -right-12 w-32 h-32 bg-purple-500/30 rounded-full blur-2xl pointer-events-none"></div>
-
-            <div id="modalIcon" class="text-6xl sm:text-7xl my-2 animate-bounce">
-                🎁
-            </div>
-
-            <h3 class="title-font text-amber-300 text-sm font-bold uppercase tracking-widest">
-                Contrato Cumprido!
-            </h3>
-
-            <div id="modalPrizeTitle" class="title-font text-2xl sm:text-3xl font-black text-white my-2 leading-tight">
-                Nome do Prêmio
-            </div>
-
-            <p id="modalPrizeDesc" class="text-purple-100 text-sm font-bold bg-purple-900/80 py-2.5 px-4 rounded-xl border border-purple-600/60 mb-4">
-                Descrição do prêmio
-            </p>
-
-            <p id="modalLegalQuote" class="text-amber-200/90 text-xs italic mb-6">
-                "Considera-se doação o contrato em que uma pessoa, por liberalidade, transfere do seu patrimônio bens ou vantagens para o de outra." (Art. 538, Código Civil)
-            </p>
-
-            <button onclick="closeModal()" class="w-full py-3.5 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-500 hover:from-amber-300 hover:to-yellow-400 text-purple-950 font-black text-lg shadow-lg hover:shadow-yellow-500/30 active:scale-95 transition-all uppercase tracking-wide">
-                Receber Doação 🍬
-            </button>
+            <button class="close-btn" onclick="fecharModal()">Receber Prêmio</button>
         </div>
     </div>
 
-    <!-- Application Logic & Sound Engine -->
     <script>
-        // 8 Slices matching all uploaded slice graphics & reference layout
-        const prizes = [
+        const canvas = document.getElementById('wheelCanvas');
+        const ctx = canvas.getContext('2d');
+        const rim = document.getElementById('casinoRim');
+
+        // Criar luzes no aro
+        const totalBulbs = 24;
+        for (let i = 0; i < totalBulbs; i++) {
+            const bulb = document.createElement('div');
+            bulb.className = 'bulb';
+            const angle = (i * 360) / totalBulbs;
+            bulb.style.transform = `rotate(${angle}deg) translate(203px) rotate(-${angle}deg)`;
+            rim.appendChild(bulb);
+        }
+
+        // Configuração das 8 fatias e suas probabilidades (Soma = 100)
+        const fatias = [
             {
-                id: "ouro_branco",
-                title: "Ouro Branco",
-                subtext: "1 bombom",
-                bgColor: "#FEF08A", // Bright yellow
-                textColor: "#713F12",
-                imgSrc: "image_d871c7.jpg",
-                emojis: ["🍫", "⭐", "✨", "👑"],
-                confettiColors: ["#fde047", "#eab308", "#ffffff"]
+                titulo: "Ouro Branco",
+                subtitulo: "1 bombom",
+                corFundo: "#ffe082",
+                corBorda: "#ffb300",
+                corTexto: "#4e342e",
+                emoji: "🍫",
+                emojisConfete: ["🍫", "✨", "💛"],
+                chance: 10 // 10% de chance
             },
             {
-                id: "lua_cheia",
-                title: "Lua Cheia",
-                subtext: "1 bala",
-                bgColor: "#F472B6", // Pink
-                textColor: "#831843",
-                imgSrc: "image_28df3d.jpg",
-                emojis: ["🍬", "🌕", "💖", "✨"],
-                confettiColors: ["#f472b6", "#38bdf8", "#ffffff"]
+                titulo: "Lua Cheia",
+                subtitulo: "1 bala",
+                corFundo: "#f8bbd0",
+                corBorda: "#ec407a",
+                corTexto: "#880e4f",
+                emoji: "🍬",
+                emojisConfete: ["🍬", "💙", "💖"],
+                chance: 16 // 16% de chance
             },
             {
-                id: "pirulito",
-                title: "Pirulito",
-                subtext: "1 unidade",
-                bgColor: "#E879F9", // Lilac / Pink
-                textColor: "#701A75",
-                imgSrc: "image_7bd00f.jpg",
-                emojis: ["🍭", "🌈", "✨", "💜"],
-                confettiColors: ["#e879f9", "#38bdf8", "#facc15"]
+                titulo: "Pirulito",
+                subtitulo: "1 unidade",
+                corFundo: "#e1bee7",
+                corBorda: "#8e24aa",
+                corTexto: "#4a148c",
+                emoji: "🍭",
+                emojisConfete: ["🍭", "🌈", "💜"],
+                chance: 16 // 16% de chance
             },
             {
-                id: "premio_premium",
-                title: "Prêmio Premium",
-                subtext: "3 doces à escolha",
-                bgColor: "#A855F7", // Purple
-                textColor: "#FFFFFF",
-                imgSrc: "image_0cc782.jpg",
-                emojis: ["👑", "🍬", "🍫", "✨"],
-                confettiColors: ["#a855f7", "#eab308", "#ffffff"]
+                titulo: "Prêmio Premium",
+                subtitulo: "3 doces à escolha",
+                corFundo: "#d1c4e9",
+                corBorda: "#5e35b1",
+                corTexto: "#311b92",
+                emoji: "👑",
+                emojisConfete: ["👑", "🍬", "🍭", "🍫"],
+                chance: 5 // 5% de chance (Reduzido!)
             },
             {
-                id: "super_premium",
-                title: "Super Premium",
-                subtext: "5 docinhos e um beijinho",
-                bgColor: "#8B5CF6", // Darker purple
-                textColor: "#FFFFFF",
-                imgSrc: "image_f2ac0f.jpg",
-                emojis: ["👑", "🍬", "💋", "🍫", "✨"],
-                confettiColors: ["#a855f7", "#eab308", "#ffffff", "#ec4899"]
+                titulo: "Super Premium",
+                subtitulo: "5 docinhos + beijinho",
+                corFundo: "#ce93d8",
+                corBorda: "#6a1b9a",
+                corTexto: "#ffffff",
+                emoji: "🎁",
+                emojisConfete: ["🎁", "🧁", "🍫", "⭐"],
+                chance: 5 // 5% de chance
             },
             {
-                id: "combo_docinho",
-                title: "Combo Docinho",
-                subtext: "1 bala + 1 pirulito",
-                bgColor: "#FBBF24", // Warm Yellow/Orange
-                textColor: "#78350F",
-                imgSrc: "image_dc4049.jpg",
-                emojis: ["🍫", "🍭", "🍬", "✨"],
-                confettiColors: ["#fbbf24", "#f472b6", "#eab308"]
+                titulo: "Combo Docinho",
+                subtitulo: "1 bala + 1 pirulito",
+                corFundo: "#ffcc80",
+                corBorda: "#fb8c00",
+                corTexto: "#e65100",
+                emoji: "🍭",
+                emojisConfete: ["🍭", "🍬", "🍫"],
+                chance: 16 // 16% de chance
             },
             {
-                id: "dia_azar",
-                title: "Dia de azar",
-                subtext: "Só 1 bala. Sem choro!",
-                bgColor: "#CBD5E1", // Grey/light blue
-                textColor: "#1E293B",
-                imgSrc: "image_e4ab55.jpg",
-                emojis: ["😭", "🍬", "😅", "🖤"],
-                confettiColors: ["#94a3b8", "#cbd5e1", "#64748b"]
+                titulo: "Dia de Azar",
+                subtitulo: "Só 1 bala. Sem choro!",
+                corFundo: "#cfd8dc",
+                corBorda: "#607d8b",
+                corTexto: "#263238",
+                emoji: "😜",
+                emojisConfete: ["🍬", "😜", "💧"],
+                chance: 16 // 16% de chance
             },
             {
-                id: "sorte_dobro",
-                title: "Sorte em Dobro",
-                subtext: "2 doces surpresa",
-                bgColor: "#C084FC", // Light Violet
-                textColor: "#3B0764",
-                imgSrc: "image_7bd00f.jpg",
-                emojis: ["🎁", "🎁", "💖", "✨"],
-                confettiColors: ["#c084fc", "#e879f9", "#fef08a"]
+                titulo: "Sorte em Dobro",
+                subtitulo: "2 doces surpresa",
+                corFundo: "#f48fb1",
+                corBorda: "#ad1457",
+                corTexto: "#4a0072",
+                emoji: "🎉",
+                emojisConfete: ["🍬", "🍭", "🎉", "💜"],
+                chance: 16 // 16% de chance
             }
         ];
 
-        const canvas = document.getElementById('wheelCanvas');
-        const ctx = canvas.getContext('2d');
-        const numPrizes = prizes.length;
-        const sliceAngle = (2 * Math.PI) / numPrizes;
+        const numFatias = fatias.length;
+        const arcAngle = (2 * Math.PI) / numFatias;
+        let rotacaoAtual = 0;
+        let girando = false;
 
-        let currentRotation = 0;
-        let isSpinning = false;
-        const loadedImages = {};
+        // Desenhar Roleta no Canvas
+        function desenharRoleta() {
+            const cx = canvas.width / 2;
+            const cy = canvas.height / 2;
+            const raio = cx;
 
-        // Preload uploaded slice image assets
-        prizes.forEach((prize) => {
-            const img = new Image();
-            img.src = prize.imgSrc;
-            img.onload = () => {
-                loadedImages[prize.id] = img;
-                drawWheel();
-            };
-        });
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
 
-        // --- WEB AUDIO API: DRUMROLL & CYMBAL CRASH SYNTHESIZER ---
+            fatias.forEach((fatia, i) => {
+                const startAngle = i * arcAngle;
+                const endAngle = startAngle + arcAngle;
+
+                // Fundo da fatia
+                ctx.beginPath();
+                ctx.moveTo(cx, cy);
+                ctx.arc(cx, cy, raio, startAngle, endAngle);
+                ctx.closePath();
+                ctx.fillStyle = fatia.corFundo;
+                ctx.fill();
+
+                // Borda divisória
+                ctx.lineWidth = 4;
+                ctx.strokeStyle = fatia.corBorda;
+                ctx.stroke();
+
+                // Conteúdo da fatia
+                ctx.save();
+                ctx.translate(cx, cy);
+                ctx.rotate(startAngle + arcAngle / 2);
+
+                // Emoji ilustrativo próximo à borda externa
+                ctx.font = "46px Arial";
+                ctx.textAlign = "center";
+                ctx.textBaseline = "middle";
+                ctx.fillText(fatia.emoji, raio - 55, 0);
+
+                // Título do Prêmio
+                ctx.fillStyle = fatia.corTexto;
+                ctx.font = "bold 20px 'Fredoka One', sans-serif";
+                ctx.textAlign = "right";
+                ctx.fillText(fatia.titulo, raio - 92, -10);
+
+                // Subtítulo do Prêmio
+                ctx.font = "800 14px 'Nunito', sans-serif";
+                ctx.fillText(fatia.subtitulo, raio - 92, 12);
+
+                ctx.restore();
+            });
+        }
+
+        desenharRoleta();
+
+        // Sorteio Ponderado baseado na porcentagem definida em cada fatia
+        function sortearIndicePonderado() {
+            const somaPesos = fatias.reduce((acc, item) => acc + item.chance, 0);
+            let sorteio = Math.random() * somaPesos;
+
+            for (let i = 0; i < fatias.length; i++) {
+                if (sorteio < fatias[i].chance) {
+                    return i;
+                }
+                sorteio -= fatias[i].chance;
+            }
+            return 0;
+        }
+
+        // Sintetizador de Som (Tambores de Suspense + Vitória) via Web Audio API
         let audioCtx = null;
-        let drumrollInterval = null;
+        let drumInterval = null;
 
-        function initAudio() {
+        function iniciarTambores(duracaoMs) {
             if (!audioCtx) {
                 audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             }
             if (audioCtx.state === 'suspended') {
                 audioCtx.resume();
             }
-        }
 
-        // Realistic Synthesized Snare Drum Hit
-        function playSnareHit(volume = 0.5) {
-            if (!audioCtx) return;
+            const inicio = Date.now();
+            let intervaloAtual = 140;
 
-            const now = audioCtx.currentTime;
+            function baterTambor() {
+                const decorrido = Date.now() - inicio;
+                if (decorrido >= duracaoMs - 200) return;
 
-            // Noise buffer for snare rattle
-            const bufferSize = audioCtx.sampleRate * 0.08;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
-
-            const noise = audioCtx.createBufferSource();
-            noise.buffer = buffer;
-
-            const noiseFilter = audioCtx.createBiquadFilter();
-            noiseFilter.type = 'highpass';
-            noiseFilter.frequency.value = 1000;
-
-            const noiseEnvelope = audioCtx.createGain();
-            noiseEnvelope.gain.setValueAtTime(volume, now);
-            noiseEnvelope.gain.exponentialRampToValueAtTime(0.01, now + 0.07);
-
-            noise.connect(noiseFilter);
-            noiseFilter.connect(noiseEnvelope);
-            noiseEnvelope.connect(audioCtx.destination);
-
-            // Drum shell tone oscillator
-            const osc = audioCtx.createOscillator();
-            osc.type = 'triangle';
-            osc.frequency.setValueAtTime(180, now);
-            osc.frequency.exponentialRampToValueAtTime(45, now + 0.05);
-
-            const oscEnvelope = audioCtx.createGain();
-            oscEnvelope.gain.setValueAtTime(volume * 0.7, now);
-            oscEnvelope.gain.exponentialRampToValueAtTime(0.01, now + 0.05);
-
-            osc.connect(oscEnvelope);
-            oscEnvelope.connect(audioCtx.destination);
-
-            noise.start(now);
-            osc.start(now);
-            noise.stop(now + 0.07);
-            osc.stop(now + 0.05);
-        }
-
-        // Cymbal Crash + Victory Fanfare Sound
-        function playCymbalCrash() {
-            if (!audioCtx) return;
-            const now = audioCtx.currentTime;
-
-            // White noise burst for crash
-            const bufferSize = audioCtx.sampleRate * 1.2;
-            const buffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
-            const output = buffer.getChannelData(0);
-            for (let i = 0; i < bufferSize; i++) {
-                output[i] = Math.random() * 2 - 1;
-            }
-
-            const crash = audioCtx.createBufferSource();
-            crash.buffer = buffer;
-
-            const filter = audioCtx.createBiquadFilter();
-            filter.type = 'highpass';
-            filter.frequency.value = 3500;
-
-            const gain = audioCtx.createGain();
-            gain.gain.setValueAtTime(0.75, now);
-            gain.gain.exponentialRampToValueAtTime(0.001, now + 1.2);
-
-            crash.connect(filter);
-            filter.connect(gain);
-            gain.connect(audioCtx.destination);
-
-            crash.start(now);
-
-            // Victory brass chord
-            const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-            notes.forEach((freq, idx) => {
                 const osc = audioCtx.createOscillator();
-                const noteGain = audioCtx.createGain();
+                const gain = audioCtx.createGain();
                 osc.type = 'triangle';
-                osc.frequency.setValueAtTime(freq, now + idx * 0.06);
-                
-                noteGain.gain.setValueAtTime(0.3, now + idx * 0.06);
-                noteGain.gain.exponentialRampToValueAtTime(0.001, now + 0.8 + idx * 0.06);
+                osc.frequency.setValueAtTime(140, audioCtx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(55, audioCtx.currentTime + 0.08);
 
-                osc.connect(noteGain);
-                noteGain.connect(audioCtx.destination);
+                gain.gain.setValueAtTime(0.25, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, audioCtx.currentTime + 0.09);
 
-                osc.start(now + idx * 0.06);
-                osc.stop(now + 0.9 + idx * 0.06);
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start();
+                osc.stop(audioCtx.currentTime + 0.09);
+
+                // Acelera no meio e desacelera no final
+                const progresso = decorrido / duracaoMs;
+                if (progresso < 0.5) {
+                    intervaloAtual = Math.max(55, 140 - progresso * 170);
+                } else {
+                    intervaloAtual = 55 + (progresso - 0.5) * 260;
+                }
+
+                drumInterval = setTimeout(baterTambor, intervaloAtual);
+            }
+
+            baterTambor();
+        }
+
+        function tocarSomVitoria() {
+            if (!audioCtx) return;
+            const notas = [523.25, 659.25, 783.99, 1046.50]; // Acorde Dó Maior
+            notas.forEach((freq, idx) => {
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioCtx.currentTime + idx * 0.08);
+
+                gain.gain.setValueAtTime(0.2, audioCtx.currentTime + idx * 0.08);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + idx * 0.08 + 0.6);
+
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.start(audioCtx.currentTime + idx * 0.08);
+                osc.stop(audioCtx.currentTime + idx * 0.08 + 0.6);
             });
         }
 
-        // Start Drumroll Sound
-        function startDrumroll(durationMs) {
-            initAudio();
-            if (drumrollInterval) clearInterval(drumrollInterval);
+        function iniciarGiro() {
+            if (girando) return;
+            girando = true;
+            document.getElementById('spinBtn').disabled = true;
 
-            let startTime = Date.now();
-            let intervalTime = 120;
+            const indiceVencedor = sortearIndicePonderado();
+            const grausPorFatia = 360 / numFatias;
 
-            function step() {
-                let elapsed = Date.now() - startTime;
-                let progress = Math.min(elapsed / durationMs, 1);
+            // O ponteiro está à direita (0 graus no Canvas).
+            // Calculamos o ângulo central da fatia sorteada e alinhamos a 0 graus.
+            const anguloCentroFatia = indiceVencedor * grausPorFatia + grausPorFatia / 2;
+            const voltasCompletas = 6 * 360;
+            const ajusteAtual = rotacaoAtual % 360;
+            const anguloAlvo = voltasCompletas + (360 - anguloCentroFatia) - ajusteAtual;
 
-                // Ramp up speed (shorter interval) and volume
-                intervalTime = Math.max(30, 110 * (1 - Math.pow(progress, 0.7)));
-                let volume = 0.3 + (progress * 0.5);
+            rotacaoAtual += anguloAlvo;
+            canvas.style.transform = `rotate(${rotacaoAtual}deg)`;
 
-                playSnareHit(volume);
-
-                if (elapsed < durationMs - 150) {
-                    drumrollInterval = setTimeout(step, intervalTime);
-                }
-            }
-
-            step();
-        }
-
-        function stopDrumroll() {
-            if (drumrollInterval) {
-                clearTimeout(drumrollInterval);
-                drumrollInterval = null;
-            }
-        }
-
-        // --- DRAW WHEEL CASINO STYLE ---
-        function drawWheel() {
-            const width = canvas.width;
-            const height = canvas.height;
-            const radius = width / 2;
-            const outerRimWidth = 60;
-            const innerRadius = radius - outerRimWidth;
-
-            ctx.clearRect(0, 0, width, height);
-
-            // 1. Outer Casino Rim
-            ctx.save();
-            ctx.beginPath();
-            ctx.arc(radius, radius, radius - 5, 0, 2 * Math.PI);
-            ctx.fillStyle = "#4C1D95";
-            ctx.fill();
-            ctx.lineWidth = 8;
-            ctx.strokeStyle = "#F59E0B";
-            ctx.stroke();
-
-            // 2. Inner Golden Border Accent
-            ctx.beginPath();
-            ctx.arc(radius, radius, innerRadius + 4, 0, 2 * Math.PI);
-            ctx.lineWidth = 6;
-            ctx.strokeStyle = "#FCD34D";
-            ctx.stroke();
-
-            // 3. Draw Slices
-            for (let i = 0; i < numPrizes; i++) {
-                const prize = prizes[i];
-                const startAngle = i * sliceAngle;
-                const endAngle = startAngle + sliceAngle;
-
-                ctx.save();
-
-                // Masking vector slice
-                ctx.beginPath();
-                ctx.moveTo(radius, radius);
-                ctx.arc(radius, radius, innerRadius, startAngle, endAngle);
-                ctx.closePath();
-
-                ctx.fillStyle = prize.bgColor;
-                ctx.fill();
-                ctx.clip();
-
-                // Draw loaded image or fallback vector art
-                if (loadedImages[prize.id]) {
-                    ctx.save();
-                    ctx.translate(radius, radius);
-                    ctx.rotate(startAngle + sliceAngle / 2);
-
-                    const img = loadedImages[prize.id];
-                    const imgSize = innerRadius * 1.15;
-                    ctx.drawImage(img, -imgSize / 2, -imgSize / 2, imgSize, imgSize);
-
-                    ctx.restore();
-                } else {
-                    // Styled Fallback rendering
-                    ctx.save();
-                    ctx.translate(radius, radius);
-                    ctx.rotate(startAngle + sliceAngle / 2);
-                    ctx.textAlign = "right";
-                    ctx.textBaseline = "middle";
-
-                    ctx.fillStyle = prize.textColor;
-                    ctx.font = "900 28px 'Fredoka', 'Nunito', sans-serif";
-                    ctx.fillText(prize.title, innerRadius - 35, -14);
-
-                    ctx.font = "700 18px 'Nunito', sans-serif";
-                    ctx.globalAlpha = 0.9;
-                    ctx.fillText(prize.subtext, innerRadius - 35, 20);
-
-                    ctx.restore();
-                }
-
-                ctx.restore();
-
-                // Slice Separator Line
-                ctx.beginPath();
-                ctx.moveTo(radius, radius);
-                ctx.arc(radius, radius, innerRadius, startAngle, endAngle);
-                ctx.closePath();
-                ctx.lineWidth = 5;
-                ctx.strokeStyle = "#FFFFFF";
-                ctx.stroke();
-            }
-
-            // 4. Draw Casino Lights (Bulbs) on Rim
-            const numBulbs = 32;
-            const bulbRadius = radius - (outerRimWidth / 2);
-            for (let b = 0; b < numBulbs; b++) {
-                const angle = (b * (2 * Math.PI / numBulbs));
-                const bx = radius + bulbRadius * Math.cos(angle);
-                const by = radius + bulbRadius * Math.sin(angle);
-
-                ctx.save();
-                ctx.beginPath();
-                ctx.arc(bx, by, 9, 0, 2 * Math.PI);
-                ctx.fillStyle = (b % 2 === 0) ? "#FDE047" : "#FFFFFF";
-                ctx.shadowColor = "#FDE047";
-                ctx.shadowBlur = 10;
-                ctx.fill();
-                ctx.lineWidth = 2.5;
-                ctx.strokeStyle = "#78350F";
-                ctx.stroke();
-                ctx.restore();
-            }
-
-            ctx.restore();
-        }
-
-        drawWheel();
-
-        // SPIN LOGIC WITH DRUMROLL AND SMOOTH DECELERATION
-        function spinWheel() {
-            if (isSpinning) return;
-            isSpinning = true;
-
-            const spinBtn = document.getElementById('spinBtn');
-            spinBtn.disabled = true;
-            spinBtn.classList.add('opacity-50', 'cursor-not-allowed');
-
-            const spinDurationMs = 5000;
-
-            // Trigger synthesized drumroll audio
-            startDrumroll(spinDurationMs);
-
-            const winningIndex = Math.floor(Math.random() * numPrizes);
-            const degreesPerSlice = 360 / numPrizes;
-
-            // Target angle so the selected slice lines up with 0° (the RIGHT arrow pointer)
-            const sliceCenterAngle = (winningIndex * degreesPerSlice) + (degreesPerSlice / 2);
-            const extraRotations = (6 + Math.floor(Math.random() * 3)) * 360;
-
-            const targetRotation = extraRotations + (360 - sliceCenterAngle);
-            const finalRotation = currentRotation + targetRotation + (360 - (currentRotation % 360));
-            currentRotation = finalRotation;
-
-            // Smooth CSS Transition Ease-Out
-            canvas.style.transition = `transform ${spinDurationMs}ms cubic-bezier(0.1, 0.85, 0.15, 1)`;
-            canvas.style.transform = `rotate(${finalRotation}deg)`;
+            const tempoGiro = 5000;
+            iniciarTambores(tempoGiro);
 
             setTimeout(() => {
-                isSpinning = false;
-                spinBtn.disabled = false;
-                spinBtn.classList.remove('opacity-50', 'cursor-not-allowed');
-
-                stopDrumroll();
-                playCymbalCrash();
-                handleWin(prizes[winningIndex]);
-            }, spinDurationMs);
+                clearTimeout(drumInterval);
+                tocarSomVitoria();
+                dispararFesta(fatias[indiceVencedor]);
+                mostrarModal(fatias[indiceVencedor]);
+                girando = false;
+                document.getElementById('spinBtn').disabled = false;
+            }, tempoGiro);
         }
 
-        // Handle Victory Visuals & Confetti Explosion
-        function handleWin(prize) {
-            triggerConfetti(prize.confettiColors);
-            triggerEmojiExplosion(prize.emojis);
+        function dispararFesta(premio) {
+            // Explosão de confetes tradicionais
+            confetti({
+                particleCount: 100,
+                spread: 80,
+                origin: { y: 0.6 }
+            });
 
-            setTimeout(() => {
-                document.getElementById('modalIcon').innerText = prize.emojis[0] || '🎉';
-                document.getElementById('modalPrizeTitle').innerText = prize.title;
-                document.getElementById('modalPrizeDesc').innerText = prize.subtext;
-                document.getElementById('resultModal').classList.remove('hidden');
-            }, 200);
-        }
+            // Chuva de emojis específicos do prêmio sorteado
+            for (let i = 0; i < 18; i++) {
+                const span = document.createElement('span');
+                span.className = 'floating-candy';
+                const lista = premio.emojisConfete;
+                span.innerText = lista[Math.floor(Math.random() * lista.length)];
+                span.style.left = Math.random() * 90 + 5 + 'vw';
+                span.style.bottom = '10px';
+                span.style.animationDelay = (Math.random() * 0.5) + 's';
+                document.body.appendChild(span);
 
-        // Canvas Confetti Library Integration
-        function triggerConfetti(colors) {
-            if (typeof confetti === 'function') {
-                confetti({
-                    particleCount: 90,
-                    angle: 60,
-                    spread: 65,
-                    origin: { x: 0, y: 0.7 },
-                    colors: colors
-                });
-                confetti({
-                    particleCount: 90,
-                    angle: 120,
-                    spread: 65,
-                    origin: { x: 1, y: 0.7 },
-                    colors: colors
-                });
-
-                setTimeout(() => {
-                    confetti({
-                        particleCount: 130,
-                        spread: 100,
-                        origin: { y: 0.55 },
-                        colors: colors
-                    });
-                }, 250);
+                setTimeout(() => span.remove(), 2600);
             }
         }
 
-        // Floating Emojis Explosion
-        function triggerEmojiExplosion(emojis) {
-            const particleCount = 30;
-
-            for (let i = 0; i < particleCount; i++) {
-                setTimeout(() => {
-                    const emoji = document.createElement('div');
-                    emoji.className = 'floating-emoji text-3xl sm:text-5xl';
-                    emoji.innerText = emojis[Math.floor(Math.random() * emojis.length)];
-
-                    const startX = window.innerWidth / 2 + (Math.random() * 140 - 70);
-                    const startY = window.innerHeight / 2 + (Math.random() * 100 - 50);
-
-                    const spreadX = (Math.random() * 320 - 160) + 'px';
-                    const rotation = (Math.random() * 360 - 180) + 'deg';
-
-                    emoji.style.left = `${startX}px`;
-                    emoji.style.top = `${startY}px`;
-                    emoji.style.setProperty('--spread-x', spreadX);
-                    emoji.style.setProperty('--rotation', rotation);
-
-                    document.body.appendChild(emoji);
-
-                    setTimeout(() => {
-                        emoji.remove();
-                    }, 2600);
-                }, i * 40);
-            }
+        function mostrarModal(premio) {
+            document.getElementById('modalEmoji').innerText = premio.emoji;
+            document.getElementById('modalPrize').innerText = `${premio.titulo} — ${premio.subtitulo}`;
+            document.getElementById('modalOverlay').style.display = 'flex';
         }
 
-        function closeModal() {
-            document.getElementById('resultModal').classList.add('hidden');
+        function fecharModal() {
+            document.getElementById('modalOverlay').style.display = 'none';
         }
     </script>
 </body>
